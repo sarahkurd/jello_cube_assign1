@@ -30,11 +30,21 @@ int sprite=0;
 int shear=0, bend=0, structural=1, pause=0, viewingMode=0, saveScreenToFile=0;
 
 struct world jello;
-struct spring *springs = NULL;
-struct spring *springList = springs;
+
+// use this list to access the spring
+struct spring *springs;
+struct spring *springListHead = NULL;
+
+struct point particleForces[8][8][8];
 
 int windowWidth, windowHeight;
 
+/**
+ * Get the rest length of the input spring type
+ *
+ * @param s The type of SPRING, an enum
+ * @return A double representing the given spring rest length
+ */
 double getSpringLength(SPRING s){
   double length;
   switch (s) {
@@ -54,26 +64,49 @@ double getSpringLength(SPRING s){
   return length;
 }
 
+/**
+ * Connect two points with the given spring
+ * Stores the spring in a linked list called [spring]
+ *
+ * @param currPoint The origin point
+ * @param i_connect the x coordinate of the point we are connecting to
+ * @param j_connect the y coordinate of the point we are connecting to
+ * @param k_connect the z coordinate of the point we are connecting to
+ * @param springType The [SPRING] enum to be used to get coefficient values during force calculations
+ */
 void connectSprings(struct point currPoint, int i_connect, int j_connect, int k_connect, SPRING springType) {
     if (!((i_connect>7) || (i_connect<0) 
           || (j_connect>7) || (j_connect<0) 
           || (k_connect>7) || (k_connect<0))) 
     {
-        springs = (struct spring*) malloc(sizeof(struct spring));
-        springs->p1 = currPoint;
+        struct spring *springNew;
+        springNew = (struct spring*) malloc(sizeof(struct spring));
+        springNew->p1 = currPoint;
         struct point connectPoint;
         connectPoint.x = i_connect;
         connectPoint.y = j_connect;
         connectPoint.z = k_connect;
-        springs->p2 = connectPoint;
-        springs->springType = springType;
+        springNew->p2 = connectPoint;
+        springNew->springType = springType;
         double length = getSpringLength(springType);
-        springs->restLength = length;
-        springs->next = NULL;
-        springs = springs->next;
+        springNew->restLength = length;
+        springNew->next = NULL;
+        if (springs == NULL) {
+            springs = springNew;
+        } else {
+            struct spring *temp = springs;
+            while (temp->next != NULL) {
+                temp = temp->next;
+            }
+            temp->next = springNew;
+        }
     }
 }
 
+/**
+ * Connect the jello cube with structural, shear, and bend spring
+ * The list of spring starts at [springList]
+ */
 void buildSpringNetwork() {
   for (int i=0; i<=7; i++)
     for (int j=0; j<=7; j++)
@@ -88,6 +121,9 @@ void buildSpringNetwork() {
           connectSprings(currPoint, i + 1, j + 1, k, SHEAR_FACE);
           connectSprings(currPoint, i + 1, j, k + 1, SHEAR_FACE);
           connectSprings(currPoint, i, j + 1, k + 1, SHEAR_FACE);
+          connectSprings(currPoint, i - 1, j + 1, k, SHEAR_FACE);
+          connectSprings(currPoint, i - 1, j, k + 1, SHEAR_FACE);
+          connectSprings(currPoint, i, j - 1, k + 1, SHEAR_FACE);
           connectSprings(currPoint, i - 1, j + 1, k + 1, SHEAR_DIAGONAL);
           connectSprings(currPoint, i + 1, j + 1, k + 1, SHEAR_DIAGONAL);
           // BEND
@@ -95,6 +131,23 @@ void buildSpringNetwork() {
           connectSprings(currPoint, i, j + 2, k, BEND);
           connectSprings(currPoint, i, j, k + 2, BEND);
       }
+}
+
+/**
+ * Iterate through the list of springs and calculate hooks force and damping force.
+ * Store the total force on each particle in a new 3D array of forces
+ */
+void calculateForcesOnParticles() {
+    while (springs != NULL) {
+        struct point vectorBetweenPoints;
+        struct point hooksForce;
+        struct point dampingForce;
+        vectorBetweenPoints.x = springs->p1.x - springs->p2.x;
+        vectorBetweenPoints.y = springs->p1.y - springs->p2.y;
+        vectorBetweenPoints.z = springs->p1.z - springs->p2.z;
+        hooksForce = computeHooks(jello.kElastic, springs->restLength, &vectorBetweenPoints);
+        springs = springs->next;
+    }
 }
 
 void myinit()
@@ -336,6 +389,7 @@ int main (int argc, char ** argv)
 
   // build spring network once we have loaded the world
   buildSpringNetwork();
+  calculateForcesOnParticles();
 
   glutInit(&argc,argv);
   

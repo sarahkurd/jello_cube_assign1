@@ -16,6 +16,22 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
   /* for you to implement ... */
 }
 
+struct point computeHooks(double k, double restLength, struct point *vectorBetweenPoints) {
+    struct point hooksForce;
+    double mag = magnitude(vectorBetweenPoints);
+    double displacement = mag - restLength;
+    double length; //normalized
+    pNORMALIZE(*vectorBetweenPoints)
+    pMULTIPLY(*vectorBetweenPoints, displacement, *vectorBetweenPoints)
+    pMULTIPLY(*vectorBetweenPoints, -1.0 * k, hooksForce)
+    return hooksForce;
+}
+
+double magnitude(struct point *vector) {
+    double squares = (vector->x * vector->x) + (vector->y * vector->y) + (vector->z * vector->z);
+    return sqrt(squares);
+}
+
 /* performs one step of Euler Integration */
 /* as a result, updates the jello structure */
 void Euler(struct world * jello)

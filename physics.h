@@ -9,6 +9,9 @@
 #define _PHYSICS_H_
 
 void computeAcceleration(struct world * jello, struct point a[8][8][8]);
+struct point computeHooks(double k, double restLength, struct point *vectorBetweenPoints);
+struct point computeDamping(double k, struct point *vectorBetweenPoints, struct point *velocityPointA, struct point *velocityPointB);
+double magnitude(struct point *vector);
 
 // perform one step of Euler and Runge-Kutta-4th-order integrators
 // updates the jello structure accordingly
