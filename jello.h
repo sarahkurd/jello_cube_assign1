@@ -56,6 +56,7 @@ struct world
   struct point * forceField; // pointer to the array of values of the force field
   struct point p[8][8][8]; // position of the 512 control points
   struct point v[8][8][8]; // velocities of the 512 control points
+  struct point particleForces[8][8][8]; // to be populated
 };
 
 // define the different types of spring so it is clear to understand as a reader
@@ -63,15 +64,14 @@ typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, COLLISION } SPRING;
 
 struct spring
 {
-  struct point p1;
-  struct point p2;
+  struct point p1; //indices
+  struct point p2; //indices
   double restLength;
   SPRING springType;
   struct spring *next;
 };
 
 extern struct world jello;
-extern struct point particleForces[8][8][8];
 
 // computes crossproduct of three vectors, which are given as points
 // struct point vector1, vector2, dest

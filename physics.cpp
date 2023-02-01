@@ -13,18 +13,43 @@
    Returns result in array 'a'. */
 void computeAcceleration(struct world * jello, struct point a[8][8][8])
 {
-  /* for you to implement ... */
+  for (int i=0; i<=7; i++) {
+      for (int j=0; j<=7; j++) {
+          for (int k=0; k<=7; k++) {
+              a[i][j][k].x = jello->particleForces[i][j][k].x / jello->mass;
+              a[i][j][k].y = jello->particleForces[i][j][k].y / jello->mass;
+              a[i][j][k].z = jello->particleForces[i][j][k].z / jello->mass;
+          }
+      }
+  }
 }
 
 struct point computeHooks(double k, double restLength, struct point *vectorBetweenPoints) {
     struct point hooksForce;
     double mag = magnitude(vectorBetweenPoints);
     double displacement = mag - restLength;
-    double length; //normalized
+    double length; // used to normalize in pNormalize
     pNORMALIZE(*vectorBetweenPoints)
     pMULTIPLY(*vectorBetweenPoints, displacement, *vectorBetweenPoints)
     pMULTIPLY(*vectorBetweenPoints, -1.0 * k, hooksForce)
     return hooksForce;
+}
+
+struct point computeDamping(double k, struct point *vectorBetweenPoints, struct point *velocityPointA, struct point *velocityPointB) {
+    struct point dampingForce;
+    struct point difference;
+    struct point crossNumerator;
+    pDIFFERENCE(*velocityPointA, *velocityPointB, difference)
+    CROSSPRODUCTp(difference, *vectorBetweenPoints, crossNumerator);
+    double mag = magnitude(vectorBetweenPoints);
+    crossNumerator.x /= mag;
+    crossNumerator.y /= mag;
+    crossNumerator.z /= mag;
+    double length; // used to normalize in pNormalize
+    pNORMALIZE(*vectorBetweenPoints)
+    CROSSPRODUCTp(crossNumerator, *vectorBetweenPoints, dampingForce);
+    pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
+    return dampingForce;
 }
 
 double magnitude(struct point *vector) {
