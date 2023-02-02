@@ -177,12 +177,12 @@ int main()
         jello.p[i][j][k].x=1.0 * i / 7;
 	  	  jello.p[i][j][k].y=1.0 * j / 7;
 		    jello.p[i][j][k].z=1.0 * k / 7;
-        // if ((i==7) && (j==7) && (k==7))
-        // {
-        //   jello.p[i][j][k].x=1.0 + 1.0 / 7;
-	    	//   jello.p[i][j][k].y=1.0 + 1.0 / 7;
-		    //   jello.p[i][j][k].z=1.0 + 1.0 / 7;
-        // }
+         if ((i==7) && (j==7) && (k==7))
+         {
+           jello.p[i][j][k].x=1.0 + 1.0 / 7;
+	    	   jello.p[i][j][k].y=1.0 + 1.0 / 7;
+		       jello.p[i][j][k].z=1.0 + 1.0 / 7;
+         }
       }
 
   // set the velocities of control points

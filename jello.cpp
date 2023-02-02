@@ -54,8 +54,11 @@ double getSpringLength(SPRING s){
     case SHEAR_DIAGONAL:
         length = sqrt(3.0) / 7.0;
         break;
-      case BEND:
+    case BEND:
         length = 2.0 / 7.0;
+        break;
+    case COLLISION:
+        length = 0;
         break;
   }
   return length;
@@ -148,30 +151,112 @@ void calculateForcesOnParticles() {
         struct point dampingForce;
 
         // using my indices stored in the spring to index into the jello.p[][][] array
-        struct point p1 = jello.p[(int)currSpring->p1.x][(int)currSpring->p1.y][(int)currSpring->p1.z];
-        struct point p2 = jello.p[(int)currSpring->p2.x][(int)currSpring->p2.y][(int)currSpring->p2.z];
-        struct point v1 = jello.v[(int)currSpring->p1.x][(int)currSpring->p1.y][(int)currSpring->p1.z];
-        struct point v2 = jello.v[(int)currSpring->p2.x][(int)currSpring->p2.y][(int)currSpring->p2.z];
-
-        vectorBetweenPoints.x = p1.x - p2.x;
-        vectorBetweenPoints.y = p1.y - p2.y;
-        vectorBetweenPoints.z = p1.z - p2.z;
-        printf("Vector between points  x:%f  y:%f  z:%f\n", vectorBetweenPoints.x, vectorBetweenPoints.y, vectorBetweenPoints.z);
-        hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
-        dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
-        printf("Hooks  x:%f  y:%f  z:%f\n", hooksForce.x, hooksForce.y, hooksForce.z);
-        printf("Damping  x:%f  y:%f  z:%f\n", dampingForce.x, dampingForce.y, dampingForce.z);
-
-        jello.particleForces[(int)currSpring->p1.x][(int)currSpring->p1.y][(int)currSpring->p1.z].x = hooksForce.x + dampingForce.x;
-        jello.particleForces[(int)currSpring->p1.x][(int)currSpring->p1.y][(int)currSpring->p1.z].y = hooksForce.y + dampingForce.y;
-        jello.particleForces[(int)currSpring->p1.x][(int)currSpring->p1.y][(int)currSpring->p1.z].z = hooksForce.z + dampingForce.z;
-
-        jello.particleForces[(int)currSpring->p2.x][(int)currSpring->p2.y][(int)currSpring->p2.z].x = -1.0 * hooksForce.x + -1.0 * dampingForce.x;
-        jello.particleForces[(int)currSpring->p2.x][(int)currSpring->p2.y][(int)currSpring->p2.z].y = -1.0 * hooksForce.y + -1.0 * dampingForce.y;
-        jello.particleForces[(int)currSpring->p2.x][(int)currSpring->p2.y][(int)currSpring->p2.z].z = -1.0 * hooksForce.z + -1.0 * dampingForce.z;
+        struct point p1 = jello.p[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
+        struct point v1 = jello.v[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
+        if (currSpring->springType == COLLISION) {
+            struct point v2; // collision point has not velocity
+            v2.x = 0;
+            v2.y = 0;
+            v2.z = 0;
+            struct point p2 = currSpring->p2;
+            vectorBetweenPoints.x = p1.x - p2.x;
+            vectorBetweenPoints.y = p1.y - p2.y;
+            vectorBetweenPoints.z = p1.z - p2.z;
+            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
+            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
+        } else {
+            struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
+            struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
+            vectorBetweenPoints.x = p1.x - p2.x;
+            vectorBetweenPoints.y = p1.y - p2.y;
+            vectorBetweenPoints.z = p1.z - p2.z;
+            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
+            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
+            //printf("Vector between points  x:%f  y:%f  z:%f\n", vectorBetweenPoints.x, vectorBetweenPoints.y, vectorBetweenPoints.z);
+            //printf("Hooks  x:%f  y:%f  z:%f\n", hooksForce.x, hooksForce.y, hooksForce.z);
+            //printf("Damping  x:%f  y:%f  z:%f\n", dampingForce.x, dampingForce.y, dampingForce.z);
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x =
+                    -1.0 * hooksForce.x + -1.0 * dampingForce.x;
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].y =
+                    -1.0 * hooksForce.y + -1.0 * dampingForce.y;
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].z =
+                    -1.0 * hooksForce.z + -1.0 * dampingForce.z;
+        }
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x =
+                hooksForce.x + dampingForce.x;
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y =
+                hooksForce.y + dampingForce.y;
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z =
+                hooksForce.z + dampingForce.z;
 
         currSpring = currSpring->next;
     }
+}
+
+void findCollisionPoint(int i, int j, int k, struct point *collisionPoint) {
+    struct point p = jello.p[i][j][k];
+    if (p.x > 2.0) {
+        collisionPoint->x = 2.0;
+        collisionPoint->y = p.y;
+        collisionPoint->z = p.z;
+    } else if (p.x < -2.0) {
+        collisionPoint->x = -2.0;
+        collisionPoint->y = p.y;
+        collisionPoint->z = p.z;
+    } else if (p.y > 2.0) {
+        collisionPoint->x = p.x;
+        collisionPoint->y = 2.0;
+        collisionPoint->z = p.z;
+    } else if (p.y < -2.0) {
+        collisionPoint->x = p.x;
+        collisionPoint->y = -2.0;
+        collisionPoint->z = p.z;
+    } else if (p.z > 2.0) {
+        collisionPoint->x = p.x;
+        collisionPoint->y = p.y;
+        collisionPoint->z = 2.0;
+    } else if (p.z < -2.0) {
+        collisionPoint->x = p.x;
+        collisionPoint->y = p.y;
+        collisionPoint->z = -2.0;
+    }
+}
+
+void checkCollision() {
+    for (int i=0; i<=7; i++)
+        for (int j=0; j<=7; j++)
+            for (int k=0; k<=7; k++)
+            {
+                struct point p = jello.p[i][j][k];
+                if (p.x > 2.0 || p.x < -2.0 || p.y > 2.0 || p.y < -2.0 || p.z > 2.0 || p.z < -2.0) {
+                    // create a point, the collision point, that will have the
+                    struct point cubePoint;
+                    struct point collisionPoint;
+                    cubePoint.x = i;
+                    cubePoint.y = j;
+                    cubePoint.z = k;
+                    findCollisionPoint(i, j, k, &collisionPoint);
+
+                    struct spring *collisionSpring;
+                    collisionSpring = (struct spring*) malloc(sizeof(struct spring));
+                    collisionSpring->p1 = cubePoint;
+                    collisionSpring->p2 = collisionPoint;
+                    collisionSpring->restLength = getSpringLength(COLLISION);
+                    collisionSpring->springType = COLLISION;
+                    collisionSpring->next = NULL;
+
+                    // add new spring at the end of the linked list
+                    if (springs == NULL) {
+                        springs = collisionSpring;
+                    } else {
+                        struct spring *temp = springs;
+                        while (temp->next != NULL) {
+                            temp = temp->next;
+                        }
+                        temp->next = collisionSpring;
+                    }
+                }
+            }
 }
 
 void myinit()
@@ -181,7 +266,7 @@ void myinit()
   gluPerspective(90.0,1.0,0.01,1000.0);
 
   // set background color to grey
-  glClearColor(0.5, 0.5, 0.5, 0.0);
+  glClearColor(0.0, 0.5, 0.5, 0.0);
 
   glCullFace(GL_BACK);
   glEnable(GL_CULL_FACE);
@@ -395,13 +480,13 @@ void doIdle()
   if (pause == 0)
   {
     // insert code which appropriately performs one step of the cube simulation:
-  }
-
-  calculateForcesOnParticles();
-  if (strcmp(jello.integrator, "RK4")) {
+    checkCollision();
+    calculateForcesOnParticles();
+    if (strcmp(jello.integrator, "RK4")) {
       RK4(&jello);
-  } else {
+    } else {
       Euler(&jello);
+    }
   }
 
   glutPostRedisplay();
