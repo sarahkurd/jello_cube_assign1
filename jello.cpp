@@ -131,7 +131,9 @@ void buildSpringNetwork() {
           connectSprings(i, j, k, i - 1, j, k + 1, SHEAR_FACE);
           connectSprings(i, j, k, i, j - 1, k + 1, SHEAR_FACE);
           connectSprings(i, j, k, i - 1, j + 1, k + 1, SHEAR_DIAGONAL);
+          connectSprings(i, j, k, i - 1, j - 1, k + 1, SHEAR_DIAGONAL);
           connectSprings(i, j, k, i + 1, j + 1, k + 1, SHEAR_DIAGONAL);
+          connectSprings(i, j, k, i + 1, j - 1, k + 1, SHEAR_DIAGONAL);
           // BEND
           connectSprings(i, j, k, i + 2, j, k, BEND);
           connectSprings(i, j, k, i, j + 2, k, BEND);
@@ -139,12 +141,26 @@ void buildSpringNetwork() {
       }
 }
 
+void clearParticleForces() {
+    for (int i=0; i<=7; i++)
+        for (int j=0; j<=7; j++)
+            for (int k=0; k<=7; k++)
+            {
+                jello.particleForces[i][j][k].x = 0;
+                jello.particleForces[i][j][k].y = 0;
+                jello.particleForces[i][j][k].z = 0;
+            }
+}
+
 /**
  * Iterate through the list of springs and calculate hooks force and damping force.
  * Store the total force on each particle in a new 3D array of forces
  */
 void calculateForcesOnParticles() {
+    // clear all previous forces from previous iterations
+    clearParticleForces();
     struct spring *currSpring = springs;
+    struct spring *previous = currSpring;
     while (currSpring != NULL) {
         struct point vectorBetweenPoints;
         struct point hooksForce;
@@ -154,41 +170,54 @@ void calculateForcesOnParticles() {
         struct point p1 = jello.p[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
         struct point v1 = jello.v[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
         if (currSpring->springType == COLLISION) {
-            struct point v2; // collision point has not velocity
+            struct point v2; // collision point has no velocity
             v2.x = 0;
             v2.y = 0;
             v2.z = 0;
             struct point p2 = currSpring->p2;
-            vectorBetweenPoints.x = p1.x - p2.x;
-            vectorBetweenPoints.y = p1.y - p2.y;
-            vectorBetweenPoints.z = p1.z - p2.z;
-            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
-            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            hooksForce = computeHooks(jello.kCollision, currSpring->restLength, &vectorBetweenPoints);
+
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            dampingForce = computeDamping(jello.dCollision, &vectorBetweenPoints, &v1, &v2);
         } else {
             struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
             struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
-            vectorBetweenPoints.x = p1.x - p2.x;
-            vectorBetweenPoints.y = p1.y - p2.y;
-            vectorBetweenPoints.z = p1.z - p2.z;
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
             hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
-            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
-            //printf("Vector between points  x:%f  y:%f  z:%f\n", vectorBetweenPoints.x, vectorBetweenPoints.y, vectorBetweenPoints.z);
-            //printf("Hooks  x:%f  y:%f  z:%f\n", hooksForce.x, hooksForce.y, hooksForce.z);
-            //printf("Damping  x:%f  y:%f  z:%f\n", dampingForce.x, dampingForce.y, dampingForce.z);
-            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x =
-                    -1.0 * hooksForce.x + -1.0 * dampingForce.x;
-            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].y =
-                    -1.0 * hooksForce.y + -1.0 * dampingForce.y;
-            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].z =
-                    -1.0 * hooksForce.z + -1.0 * dampingForce.z;
-        }
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x =
-                hooksForce.x + dampingForce.x;
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y =
-                hooksForce.y + dampingForce.y;
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z =
-                hooksForce.z + dampingForce.z;
 
+            // reset the vector between points because it was modified in the hook's calculations
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x +=
+                    hooksForce.x + dampingForce.x;
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].y +=
+                    hooksForce.y + dampingForce.y;
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].z +=
+                    hooksForce.z + dampingForce.z;
+        }
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
+                -1.0 * hooksForce.x + -1.0 * dampingForce.x;
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
+                -1.0 * hooksForce.y + -1.0 * dampingForce.y;
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
+                -1.0 * hooksForce.z + -1.0 * dampingForce.z;
+
+        // Unlink the collision node from the linked list.
+        // We only want it in our list of springs once, at the time of collision.
+        if (currSpring->springType == COLLISION) {
+            previous->next = currSpring->next;
+        } else {
+            previous = currSpring;
+        }
         currSpring = currSpring->next;
     }
 }
@@ -505,7 +534,6 @@ int main (int argc, char ** argv)
 
   // build spring network once we have loaded the world
   buildSpringNetwork();
-  calculateForcesOnParticles();
 
   glutInit(&argc,argv);
   
