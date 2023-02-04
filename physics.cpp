@@ -26,10 +26,9 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
 
 struct point computeHooks(double k, double restLength, struct point *vectorBetweenPoints) {
     struct point hooksForce;
-    double mag = magnitude(vectorBetweenPoints);
-    double displacement = mag - restLength;
     double length; // used to normalize in pNormalize
     pNORMALIZE(*vectorBetweenPoints)
+    double displacement = length - restLength;
     pMULTIPLY(*vectorBetweenPoints, displacement, *vectorBetweenPoints)
     pMULTIPLY(*vectorBetweenPoints, -1.0 * k, hooksForce)
     return hooksForce;
@@ -38,24 +37,20 @@ struct point computeHooks(double k, double restLength, struct point *vectorBetwe
 struct point computeDamping(double k, struct point *vectorBetweenPoints, struct point *velocityPointA, struct point *velocityPointB) {
     struct point dampingForce;
     struct point difference;
-    struct point crossNumerator;
     pDIFFERENCE(*velocityPointA, *velocityPointB, difference)
-    CROSSPRODUCTp(difference, *vectorBetweenPoints, crossNumerator);
-    double mag = magnitude(vectorBetweenPoints);
-    crossNumerator.x /= mag;
-    crossNumerator.y /= mag;
-    crossNumerator.z /= mag;
+    double numerator = dotProduct(&difference, vectorBetweenPoints);
     double length; // used to normalize in pNormalize
     pNORMALIZE(*vectorBetweenPoints)
-    CROSSPRODUCTp(crossNumerator, *vectorBetweenPoints, dampingForce);
+    numerator /= length;
+    pMULTIPLY(*vectorBetweenPoints, numerator, dampingForce)
     pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
     return dampingForce;
 }
 
-double magnitude(struct point *vector) {
-    double squares = (vector->x * vector->x) + (vector->y * vector->y) + (vector->z * vector->z);
-    return sqrt(squares);
+double dotProduct(struct point *vector1, struct point *vector2) {
+    return (vector1->x * vector2->x) + (vector1->y * vector2->y) + (vector1->z * vector2->z);
 }
+
 
 /* performs one step of Euler Integration */
 /* as a result, updates the jello structure */

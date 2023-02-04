@@ -183,7 +183,7 @@ void calculateForcesOnParticles() {
             vectorBetweenPoints.x = p2.x - p1.x;
             vectorBetweenPoints.y = p2.y - p1.y;
             vectorBetweenPoints.z = p2.z - p1.z;
-            dampingForce = computeDamping(jello.dCollision, &vectorBetweenPoints, &v1, &v2);
+            dampingForce = computeDamping(jello.dCollision, &vectorBetweenPoints, &v2, &v1);
         } else {
             struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
             struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
@@ -196,7 +196,7 @@ void calculateForcesOnParticles() {
             vectorBetweenPoints.x = p2.x - p1.x;
             vectorBetweenPoints.y = p2.y - p1.y;
             vectorBetweenPoints.z = p2.z - p1.z;
-            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v1, &v2);
+            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v2, &v1);
             jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x +=
                     hooksForce.x + dampingForce.x;
             jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].y +=
@@ -205,11 +205,11 @@ void calculateForcesOnParticles() {
                     hooksForce.z + dampingForce.z;
         }
         jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
-                -1.0 * hooksForce.x + -1.0 * dampingForce.x;
+                (-1.0 * hooksForce.x) + (-1.0 * dampingForce.x);
         jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
-                -1.0 * hooksForce.y + -1.0 * dampingForce.y;
+                (-1.0 * hooksForce.y) + (-1.0 * dampingForce.y);
         jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
-                -1.0 * hooksForce.z + -1.0 * dampingForce.z;
+                (-1.0 * hooksForce.z) + (-1.0 * dampingForce.z);
 
         // Unlink the collision node from the linked list.
         // We only want it in our list of springs once, at the time of collision.
@@ -517,7 +517,6 @@ void doIdle()
       Euler(&jello);
     }
   }
-
   glutPostRedisplay();
 }
 

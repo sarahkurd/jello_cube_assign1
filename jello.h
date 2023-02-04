@@ -59,9 +59,16 @@ struct world
   struct point particleForces[8][8][8]; // to be populated
 };
 
-// define the different types of spring so it is clear to understand as a reader
+/**
+ * Define the different types of springs so it is clear to understand as a reader.
+ */
 typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, COLLISION } SPRING;
 
+/**
+ * A spring describes the characteristics of a spring in
+ * our mass spring network.
+ * We will represent our mass spring network as a link linked list.
+ */
 struct spring
 {
   struct point p1; //indices
