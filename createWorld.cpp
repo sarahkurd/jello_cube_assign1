@@ -166,7 +166,7 @@ int main()
         jello.forceField[i * jello.resolution * jello.resolution 
           + j * jello.resolution + k].y = 0;
         jello.forceField[i * jello.resolution * jello.resolution 
-          + j * jello.resolution + k].z = 0;
+          + j * jello.resolution + k].z = -0.5;
       }
 
   // set the positions of control points
@@ -190,14 +190,14 @@ int main()
     for (j=0; j<=7; j++)
       for (k=0; k<=7; k++)
       {
-        jello.v[i][j][k].x=10.0;
+        jello.v[i][j][k].x=20.0;
 	  	  jello.v[i][j][k].y=-10.0;
-		    jello.v[i][j][k].z=20.0;
+		    jello.v[i][j][k].z=0.0;
       }
 
   // write the jello variable out to file on disk
   // change jello.w to whatever you need
-  writeWorld("hello.w",&jello);
+  writeWorld("force.w",&jello);
 
   return 0;
 }

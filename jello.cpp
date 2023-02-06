@@ -17,6 +17,7 @@
 double Theta = pi / 6;
 double Phi = pi / 6;
 double R = 6;
+double boundingCubeSide = 4.0;
 
 // mouse control
 int g_iMenuId;
@@ -33,6 +34,8 @@ struct world jello;
 
 // use this list to access the spring
 struct spring *springs;
+
+double *intervals;
 
 int windowWidth, windowHeight;
 
@@ -141,85 +144,183 @@ void buildSpringNetwork() {
       }
 }
 
-void clearParticleForces() {
+/**
+ * Given the resolution of the force field,
+ * create a list of intervals that represent that coordinates
+ * where an interval starts and ends.
+ * Ex: if resolution = 4 then we divide the -2 to 2 dimensions into
+ * intervals = [-2, -1, 0, 1, 2]
+ */
+void createIntervalsFromResolution() {
+    intervals = (double *)malloc((jello.resolution + 1) * sizeof(double));
+    double intervalSize = boundingCubeSide / jello.resolution;
+    double currentInterval = -2.0;
+    for (int i = 0; i <= jello.resolution; i++) {
+        intervals[i] = currentInterval;
+        currentInterval += intervalSize;
+    }
+}
+
+void getForceFieldInterval(double xyz, double xInterval[2]) {
+    for (int i = 0; i < jello.resolution; i++) {
+        //printf("interval_min: %f   interval_max: %f\n", intervals[i], intervals[i + 1]);
+        if (xyz >= intervals[i] && xyz <= intervals[i + 1]) {
+            xInterval[0] = intervals[i];
+            xInterval[1] = intervals[i + 1];
+            //printf("interval_min: %f   interval_max: %f\n", xInterval[0], xInterval[1]);
+            break;
+        }
+    }
+}
+
+/**
+ * Get the index of a coordinate on the force field
+ * This is the index needed to get the force from the jello.forceField array
+ * @param coordinate
+ * @return The index for the given coordinate (i, j, or k)
+ */
+int getIndex(double coordinate) {
+    int index = ((jello.resolution - 1) * (coordinate + 2)) / 4;
+    return index;
+}
+
+/**
+ * Iterate through each point in the cube and interpolate the forces around it
+ * Assign the interpolated value as the external force field on that point,
+ * and add to the force in jello.particleForces[i][j][k] .
+ */
+void getExternalForceAtPoints() {
     for (int i=0; i<=7; i++)
         for (int j=0; j<=7; j++)
             for (int k=0; k<=7; k++)
             {
-                jello.particleForces[i][j][k].x = 0;
-                jello.particleForces[i][j][k].y = 0;
-                jello.particleForces[i][j][k].z = 0;
+                struct point currPoint = jello.p[i][j][k];
+                // if point is not outside of the bounding cube
+                if (!(currPoint.x < -2.0 || currPoint.x > 2.0 || currPoint.y < -2.0
+                        || currPoint.y > 2.0 || currPoint.z < -2.0 || currPoint.z > 2.0)) {
+                    double xInterval[2];
+                    double yInterval[2];
+                    double zInterval[2];
+                    getForceFieldInterval(currPoint.x, xInterval);
+                    getForceFieldInterval(currPoint.y, yInterval);
+                    getForceFieldInterval(currPoint.z, zInterval);
+
+                    int index_x_min = getIndex(xInterval[0]);
+                    int index_x_max = getIndex(xInterval[1]);
+                    int index_y_min = getIndex(yInterval[0]);
+                    int index_y_max = getIndex(yInterval[1]);
+                    int index_z_min = getIndex(zInterval[0]);
+                    int index_z_max = getIndex(zInterval[1]);
+
+                    struct point force1, force2, force3, force4, force5, force6, force7, force8;
+
+                    // force field 1: x_min, y_min, z_min coordinates
+                    force1.x = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_min].x;
+                    force1.y = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_min].y;
+                    force1.z = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_min].z;
+
+                    // force field 2: x_min, y_min, z_max coordinates
+                    force2.x = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_max].x;
+                    force2.y = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_max].y;
+                    force2.z = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_max].z;
+
+                    // force field 3: x_min, y_max, z_min coordinates
+                    force3.x = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_min].x;
+                    force3.y = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_min].y;
+                    force3.z = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_min].z;
+
+                    // force field 4: x_min, y_max, z_max coordinates
+                    force4.x = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_max].x;
+                    force4.y = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_max].y;
+                    force4.z = jello.forceField[index_x_min * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_max].z;
+
+                    // force field 5: x_max, y_min, z_min coordinates
+                    force5.x = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_min].x;
+                    force5.y = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_min].y;
+                    force5.z = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_min].z;
+
+                    // force field 6: x_max, y_min, z_max coordinates
+                    force6.x = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_max].x;
+                    force6.y = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_max].y;
+                    force6.z = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_min * jello.resolution + index_z_max].z;
+
+                    // force field 7: x_max, y_max, z_min coordinates
+                    force7.x = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_min].x;
+                    force7.y = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_min].y;
+                    force7.z = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_min].z;
+
+                    // force field 8: x_max, y_max, z_max coordinates
+                    force8.x = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_max].x;
+                    force8.y = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_max].y;
+                    force8.z = jello.forceField[index_x_max * jello.resolution * jello.resolution
+                                                + index_y_max * jello.resolution + index_z_max].z;
+
+                    // Now, we do trilinear interpolation
+                    double alpha = (currPoint.x - xInterval[0]) / (xInterval[1] - xInterval[0]);
+                    double beta = (currPoint.y - yInterval[0]) / (yInterval[1] - yInterval[0]);
+                    double gamma = (currPoint.z - zInterval[0]) / (zInterval[1] - zInterval[0]);
+
+                    struct point finalTrilinearForce;
+                    finalTrilinearForce.x =
+                            (1 - alpha) * (1 - beta) * (1 - gamma) * force1.x
+                            + (alpha) * (1 - beta) * (1 - gamma) * force5.x
+                            + (alpha) * (beta) * (1 - gamma) * force7.x
+                            + (1 - alpha) * (beta) * (1 - gamma) * force3.x
+                            + (1 - alpha) * (1 - beta) * (gamma) * force2.x
+                            + (1 - alpha) * (beta) * (gamma) * force4.x
+                            + (alpha) * (1 - beta) * (gamma) * force6.x
+                            + (alpha) * (beta) * (gamma) * force8.x;
+
+                    finalTrilinearForce.y =
+                            (1 - alpha) * (1 - beta) * (1 - gamma) * force1.y
+                            + (alpha) * (1 - beta) * (1 - gamma) * force5.y
+                            + (alpha) * (beta) * (1 - gamma) * force7.y
+                            + (1 - alpha) * (beta) * (1 - gamma) * force3.y
+                            + (1 - alpha) * (1 - beta) * (gamma) * force2.y
+                            + (1 - alpha) * (beta) * (gamma) * force4.y
+                            + (alpha) * (1 - beta) * (gamma) * force6.y
+                            + (alpha) * (beta) * (gamma) * force8.y;
+
+                    finalTrilinearForce.z =
+                            (1 - alpha) * (1 - beta) * (1 - gamma) * force1.z
+                            + (alpha) * (1 - beta) * (1 - gamma) * force5.z
+                            + (alpha) * (beta) * (1 - gamma) * force7.z
+                            + (1 - alpha) * (beta) * (1 - gamma) * force3.z
+                            + (1 - alpha) * (1 - beta) * (gamma) * force2.z
+                            + (1 - alpha) * (beta) * (gamma) * force4.z
+                            + (alpha) * (1 - beta) * (gamma) * force6.z
+                            + (alpha) * (beta) * (gamma) * force8.z;
+
+                    // Add this force to the particle forces
+                    //printf("final force x: %f  y: %f  z:%f\n", finalTrilinearForce.x, finalTrilinearForce.y,finalTrilinearForce.z);
+                    jello.particleForces[i][j][k].x += finalTrilinearForce.x;
+                    jello.particleForces[i][j][k].y += finalTrilinearForce.y;
+                    jello.particleForces[i][j][k].z += finalTrilinearForce.z;
+                }
             }
-}
-
-/**
- * Iterate through the list of springs and calculate hooks force and damping force.
- * Store the total force on each particle in a new 3D array of forces
- */
-void calculateForcesOnParticles() {
-    // clear all previous forces from previous iterations
-    clearParticleForces();
-    struct spring *currSpring = springs;
-    struct spring *previous = currSpring;
-    while (currSpring != NULL) {
-        struct point vectorBetweenPoints;
-        struct point hooksForce;
-        struct point dampingForce;
-
-        // using my indices stored in the spring to index into the jello.p[][][] array
-        struct point p1 = jello.p[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
-        struct point v1 = jello.v[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
-        if (currSpring->springType == COLLISION) {
-            struct point v2; // collision point has no velocity
-            v2.x = 0;
-            v2.y = 0;
-            v2.z = 0;
-            struct point p2 = currSpring->p2;
-            vectorBetweenPoints.x = p2.x - p1.x;
-            vectorBetweenPoints.y = p2.y - p1.y;
-            vectorBetweenPoints.z = p2.z - p1.z;
-            hooksForce = computeHooks(jello.kCollision, currSpring->restLength, &vectorBetweenPoints);
-
-            vectorBetweenPoints.x = p2.x - p1.x;
-            vectorBetweenPoints.y = p2.y - p1.y;
-            vectorBetweenPoints.z = p2.z - p1.z;
-            dampingForce = computeDamping(jello.dCollision, &vectorBetweenPoints, &v2, &v1);
-        } else {
-            struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
-            struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
-            vectorBetweenPoints.x = p2.x - p1.x;
-            vectorBetweenPoints.y = p2.y - p1.y;
-            vectorBetweenPoints.z = p2.z - p1.z;
-            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
-
-            // reset the vector between points because it was modified in the hook's calculations
-            vectorBetweenPoints.x = p2.x - p1.x;
-            vectorBetweenPoints.y = p2.y - p1.y;
-            vectorBetweenPoints.z = p2.z - p1.z;
-            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v2, &v1);
-            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x +=
-                    hooksForce.x + dampingForce.x;
-            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].y +=
-                    hooksForce.y + dampingForce.y;
-            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].z +=
-                    hooksForce.z + dampingForce.z;
-        }
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
-                (-1.0 * hooksForce.x) + (-1.0 * dampingForce.x);
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
-                (-1.0 * hooksForce.y) + (-1.0 * dampingForce.y);
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
-                (-1.0 * hooksForce.z) + (-1.0 * dampingForce.z);
-
-        // Unlink the collision node from the linked list.
-        // We only want it in our list of springs once, at the time of collision.
-        if (currSpring->springType == COLLISION) {
-            previous->next = currSpring->next;
-        } else {
-            previous = currSpring;
-        }
-        currSpring = currSpring->next;
-    }
 }
 
 void findCollisionPoint(int i, int j, int k, struct point *collisionPoint) {
@@ -286,6 +387,98 @@ void checkCollision() {
                     }
                 }
             }
+}
+
+/**
+ * Clears the force on each particle from the previous iteration
+ * We do not want to accumulate forces over time.
+ * Each time step is a new set of calculations.
+ */
+void clearParticleForces() {
+    for (int i=0; i<=7; i++)
+        for (int j=0; j<=7; j++)
+            for (int k=0; k<=7; k++)
+            {
+                jello.particleForces[i][j][k].x = 0;
+                jello.particleForces[i][j][k].y = 0;
+                jello.particleForces[i][j][k].z = 0;
+            }
+}
+
+/**
+ * Iterate through the list of springs and calculate hooks force and damping force.
+ * Store the total force on each particle in a new 3D array of forces
+ */
+void calculateForcesOnParticles() {
+    // clear all previous forces from previous iterations
+    clearParticleForces();
+    struct spring *currSpring = springs;
+    struct spring *previous = currSpring;
+    while (currSpring != NULL) {
+        struct point vectorBetweenPoints;
+        struct point hooksForce;
+        struct point dampingForce;
+
+        // using my indices stored in the spring to index into the jello.p[][][] array
+        struct point p1 = jello.p[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
+        struct point v1 = jello.v[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
+        if (currSpring->springType == COLLISION) {
+            struct point v2; // collision point has no velocity
+            v2.x = 0;
+            v2.y = 0;
+            v2.z = 0;
+            struct point p2 = currSpring->p2;
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            hooksForce = computeHooks(jello.kCollision, currSpring->restLength, &vectorBetweenPoints);
+
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            dampingForce = computeDamping(jello.dCollision, &vectorBetweenPoints, &v2, &v1);
+        } else {
+            struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
+            struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
+
+            // reset the vector between points because it was modified in the hook's calculations
+            vectorBetweenPoints.x = p2.x - p1.x;
+            vectorBetweenPoints.y = p2.y - p1.y;
+            vectorBetweenPoints.z = p2.z - p1.z;
+            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v2, &v1);
+
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x +=
+                    hooksForce.x + dampingForce.x;
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].y +=
+                    hooksForce.y + dampingForce.y;
+            jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].z +=
+                    hooksForce.z + dampingForce.z;
+        }
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
+                (-1.0 * hooksForce.x) + (-1.0 * dampingForce.x);
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
+                (-1.0 * hooksForce.y) + (-1.0 * dampingForce.y);
+        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
+                (-1.0 * hooksForce.z) + (-1.0 * dampingForce.z);
+
+        // Unlink the collision node from the linked list.
+        // We only want it in our list of springs once, at the time of collision.
+        if (currSpring->springType == COLLISION) {
+            previous->next = currSpring->next;
+        } else {
+            previous = currSpring;
+        }
+        currSpring = currSpring->next;
+    }
+    // Last step to get total force on particles
+    // Add the external force field force on each particle
+    if (jello.resolution != 0) {
+        getExternalForceAtPoints();
+    }
 }
 
 void myinit()
@@ -509,12 +702,14 @@ void doIdle()
   if (pause == 0)
   {
     // insert code which appropriately performs one step of the cube simulation:
-    checkCollision();
-    calculateForcesOnParticles();
-    if (strcmp(jello.integrator, "RK4")) {
-      RK4(&jello);
-    } else {
-      Euler(&jello);
+    for (i = 1; i <= jello.n; i++) {
+        checkCollision();
+        calculateForcesOnParticles();
+        if (strcmp(jello.integrator, "RK4")) {
+            RK4(&jello);
+        } else {
+            Euler(&jello);
+        }
     }
   }
   glutPostRedisplay();
@@ -533,6 +728,7 @@ int main (int argc, char ** argv)
 
   // build spring network once we have loaded the world
   buildSpringNetwork();
+  createIntervalsFromResolution();
 
   glutInit(&argc,argv);
   

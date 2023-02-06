@@ -24,11 +24,18 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
   }
 }
 
+double mag(struct point *vec) {
+    return sqrt(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+}
+
 struct point computeHooks(double k, double restLength, struct point *vectorBetweenPoints) {
     struct point hooksForce;
+    double magnitude = mag(vectorBetweenPoints);
     double length; // used to normalize in pNormalize
     pNORMALIZE(*vectorBetweenPoints)
-    double displacement = length - restLength;
+    double displacement = magnitude - restLength;
+//    printf("length: %f   restLength: %f\n", magnitude, restLength);
+//    printf("difference: %f\n", displacement);
     pMULTIPLY(*vectorBetweenPoints, displacement, *vectorBetweenPoints)
     pMULTIPLY(*vectorBetweenPoints, -1.0 * k, hooksForce)
     return hooksForce;
@@ -43,14 +50,14 @@ struct point computeDamping(double k, struct point *vectorBetweenPoints, struct 
     pNORMALIZE(*vectorBetweenPoints)
     numerator /= length;
     pMULTIPLY(*vectorBetweenPoints, numerator, dampingForce)
-    pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
+    pMULTIPLY(dampingForce, -1.25 * k, dampingForce)
+    //printf("Damping force: x:%f  y:%f  z:%f\n", dampingForce.x, dampingForce.y, dampingForce.z);
     return dampingForce;
 }
 
 double dotProduct(struct point *vector1, struct point *vector2) {
     return (vector1->x * vector2->x) + (vector1->y * vector2->y) + (vector1->z * vector2->z);
 }
-
 
 /* performs one step of Euler Integration */
 /* as a result, updates the jello structure */
