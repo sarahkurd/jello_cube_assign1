@@ -325,27 +325,27 @@ void getExternalForceAtPoints() {
 
 void findCollisionPoint(int i, int j, int k, struct point *collisionPoint) {
     struct point p = jello.p[i][j][k];
-    if (p.x > 2.0) {
+    if (p.x >= 2.0) {
         collisionPoint->x = 2.0;
         collisionPoint->y = p.y;
         collisionPoint->z = p.z;
-    } else if (p.x < -2.0) {
+    } else if (p.x <= -2.0) {
         collisionPoint->x = -2.0;
         collisionPoint->y = p.y;
         collisionPoint->z = p.z;
-    } else if (p.y > 2.0) {
+    } else if (p.y >= 2.0) {
         collisionPoint->x = p.x;
         collisionPoint->y = 2.0;
         collisionPoint->z = p.z;
-    } else if (p.y < -2.0) {
+    } else if (p.y <= -2.0) {
         collisionPoint->x = p.x;
         collisionPoint->y = -2.0;
         collisionPoint->z = p.z;
-    } else if (p.z > 2.0) {
+    } else if (p.z >= 2.0) {
         collisionPoint->x = p.x;
         collisionPoint->y = p.y;
         collisionPoint->z = 2.0;
-    } else if (p.z < -2.0) {
+    } else if (p.z <= -2.0) {
         collisionPoint->x = p.x;
         collisionPoint->y = p.y;
         collisionPoint->z = -2.0;
@@ -358,7 +358,7 @@ void checkCollision() {
             for (int k=0; k<=7; k++)
             {
                 struct point p = jello.p[i][j][k];
-                if (p.x > 2.0 || p.x < -2.0 || p.y > 2.0 || p.y < -2.0 || p.z > 2.0 || p.z < -2.0) {
+                if (p.x >= 2.0 || p.x <= -2.0 || p.y >= 2.0 || p.y <= -2.0 || p.z >= 2.0 || p.z <= -2.0) {
                     // create a point, the collision point, that will have the
                     struct point cubePoint;
                     struct point collisionPoint;
@@ -431,25 +431,16 @@ void calculateForcesOnParticles() {
             vectorBetweenPoints.x = p2.x - p1.x;
             vectorBetweenPoints.y = p2.y - p1.y;
             vectorBetweenPoints.z = p2.z - p1.z;
-            hooksForce = computeHooks(jello.kCollision, currSpring->restLength, &vectorBetweenPoints);
-
-            vectorBetweenPoints.x = p2.x - p1.x;
-            vectorBetweenPoints.y = p2.y - p1.y;
-            vectorBetweenPoints.z = p2.z - p1.z;
-            dampingForce = computeDamping(jello.dCollision, &vectorBetweenPoints, &v2, &v1);
+            hooksForce = computeHooks(jello.kCollision, currSpring->restLength, vectorBetweenPoints);
+            dampingForce = computeDamping(jello.dCollision, vectorBetweenPoints, v2, v1);
         } else {
             struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
             struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
             vectorBetweenPoints.x = p2.x - p1.x;
             vectorBetweenPoints.y = p2.y - p1.y;
             vectorBetweenPoints.z = p2.z - p1.z;
-            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, &vectorBetweenPoints);
-
-            // reset the vector between points because it was modified in the hook's calculations
-            vectorBetweenPoints.x = p2.x - p1.x;
-            vectorBetweenPoints.y = p2.y - p1.y;
-            vectorBetweenPoints.z = p2.z - p1.z;
-            dampingForce = computeDamping(jello.dElastic, &vectorBetweenPoints, &v2, &v1);
+            hooksForce = computeHooks(jello.kElastic, currSpring->restLength, vectorBetweenPoints);
+            dampingForce = computeDamping(jello.dElastic, vectorBetweenPoints, v2, v1);
 
             jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].x +=
                     hooksForce.x + dampingForce.x;
@@ -544,8 +535,8 @@ void display()
   */
 
   // global ambient light
-  GLfloat aGa[] = { 1.0, 1.0, 1.0, 1.0 };
-  //GLfloat aGa[] = { 0.0, 0.0, 0.0, 1.0 };
+  //GLfloat aGa[] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat aGa[] = { 0.0, 0.0, 0.0, 1.0 };
 
    // light 's ambient, diffuse, specular
   // GLfloat lKa0[] = { 0.0, 0.0, 0.0, 1.0 };
@@ -624,13 +615,13 @@ void display()
   GLfloat lP7[] = { -1.999, 1.999, 1.999, 1.0 };
   
   // jelly material color
-  GLfloat mKa[] = { 0.0, 0.7, 0.0, 1.0 };
-  //GLfloat mKa[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat mKd[] = { 0.5, 0.5, 0.5, 1.0 };
-  //GLfloat mKd[] = { 0.3, 0.3, 0.3, 1.0 };
+  //GLfloat mKa[] = { 0.0, 0.7, 0.0, 1.0 };
+  GLfloat mKa[] = { 0.0, 0.0, 0.0, 1.0 };
+  //GLfloat mKd[] = { 0.5, 0.5, 0.5, 1.0 };
+  GLfloat mKd[] = { 0.3, 0.3, 0.3, 1.0 };
   GLfloat mKs[] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat mKe[] = { 0.1, 0.1, 0.1, 1.0 };
-  //GLfloat mKe[] = { 0.0, 0.0, 0.0, 1.0 };
+  //GLfloat mKe[] = { 0.1, 0.1, 0.1, 1.0 };
+  GLfloat mKe[] = { 0.0, 0.0, 0.0, 1.0 };
 
   /* set up lighting */
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, aGa);
@@ -705,11 +696,10 @@ void doIdle()
     for (i = 1; i <= jello.n; i++) {
         checkCollision();
         calculateForcesOnParticles();
-        if (strcmp(jello.integrator, "RK4")) {
-            RK4(&jello);
-        } else {
+        if (jello.integrator[0]=='E') // Euler
             Euler(&jello);
-        }
+        if (jello.integrator[0]=='R') // RK4
+            RK4(&jello);
     }
   }
   glutPostRedisplay();

@@ -24,39 +24,42 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
   }
 }
 
-double mag(struct point *vec) {
-    return sqrt(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
+double mag(struct point vec) {
+    return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
-struct point computeHooks(double k, double restLength, struct point *vectorBetweenPoints) {
+struct point computeHooks(double k, double restLength, struct point vectorBetweenPoints) {
     struct point hooksForce;
-    double magnitude = mag(vectorBetweenPoints);
+    struct point L = vectorBetweenPoints;
+    double magnitude = mag(L);
     double length; // used to normalize in pNormalize
-    pNORMALIZE(*vectorBetweenPoints)
+    pNORMALIZE(L)
     double displacement = magnitude - restLength;
-//    printf("length: %f   restLength: %f\n", magnitude, restLength);
-//    printf("difference: %f\n", displacement);
-    pMULTIPLY(*vectorBetweenPoints, displacement, *vectorBetweenPoints)
-    pMULTIPLY(*vectorBetweenPoints, -1.0 * k, hooksForce)
+    if (abs(displacement) <= 0.00001) {
+        displacement = 0.0;
+    }
+    pMULTIPLY(L, displacement, L)
+    pMULTIPLY(L, -1.0 * k, hooksForce)
     return hooksForce;
 }
 
-struct point computeDamping(double k, struct point *vectorBetweenPoints, struct point *velocityPointA, struct point *velocityPointB) {
+struct point computeDamping(double k, struct point vectorBetweenPoints, struct point velocityPointA, struct point velocityPointB) {
     struct point dampingForce;
     struct point difference;
-    pDIFFERENCE(*velocityPointA, *velocityPointB, difference)
-    double numerator = dotProduct(&difference, vectorBetweenPoints);
+    struct point L = vectorBetweenPoints;
+    double magnitude = mag(L);
+    pDIFFERENCE(velocityPointA, velocityPointB, difference)
+    double numerator = dotProduct(difference, L);
     double length; // used to normalize in pNormalize
-    pNORMALIZE(*vectorBetweenPoints)
-    numerator /= length;
-    pMULTIPLY(*vectorBetweenPoints, numerator, dampingForce)
-    pMULTIPLY(dampingForce, -1.25 * k, dampingForce)
-    //printf("Damping force: x:%f  y:%f  z:%f\n", dampingForce.x, dampingForce.y, dampingForce.z);
+    pNORMALIZE(L)
+    numerator /= magnitude;
+    pMULTIPLY(L, numerator, dampingForce)
+    pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
     return dampingForce;
 }
 
-double dotProduct(struct point *vector1, struct point *vector2) {
-    return (vector1->x * vector2->x) + (vector1->y * vector2->y) + (vector1->z * vector2->z);
+double dotProduct(struct point vector1, struct point vector2) {
+    return (vector1.x * vector2.x) + (vector1.y * vector2.y) + (vector1.z * vector2.z);
 }
 
 /* performs one step of Euler Integration */
