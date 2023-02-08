@@ -481,8 +481,8 @@ void myinit()
   // set background color to grey
   glClearColor(0.0, 0.5, 0.5, 0.0);
 
-  glCullFace(GL_BACK);
-  glEnable(GL_CULL_FACE);
+  //glCullFace(GL_BACK);
+  //glEnable(GL_CULL_FACE);
 
   glShadeModel(GL_SMOOTH);
   glEnable(GL_POLYGON_SMOOTH);
@@ -573,52 +573,52 @@ void display()
   
   // light 's ambient, diffuse, specular
   GLfloat lKa0[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd0[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs0[] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat lKd0[] = { 0.0, 0.5, 0.7, 1.0 };
+  GLfloat lKs0[] = { 0.0, 0.5, 0.7, 1.0 };
 
   GLfloat lKa1[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd1[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs1[] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat lKd1[] = { 1.0, 0.0, 1.0, 1.0 };
+  GLfloat lKs1[] = { 1.0, 0.0, 1.0, 1.0 };
 
   GLfloat lKa2[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd2[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs2[] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat lKd2[] = { 0.0, 1.0, 1.0, 1.0 };
+  GLfloat lKs2[] = { 0.0, 1.0, 1.0, 1.0 };
 
   GLfloat lKa3[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd3[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs3[] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat lKd3[] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat lKs3[] = { 1.0, 1.0, 1.0, 1.0 };
 
   GLfloat lKa4[] = { 0.0, 0.0, 0.0, 1.0 };
   GLfloat lKd4[] = { 1.0, 0.0, 0.0, 1.0 };
   GLfloat lKs4[] = { 1.0, 0.0, 0.0, 1.0 };
 
   GLfloat lKa5[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd5[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs5[] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat lKd5[] = { 1.0, 0.0, 1.0, 1.0 };
+  GLfloat lKs5[] = { 1.0, 0.0, 1.0, 1.0 };
 
   GLfloat lKa6[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd6[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs6[] = { 1.0, 0.0, 0.0, 1.0 };
+  GLfloat lKd6[] = { 1.0, 1.0, 0.0, 1.0 };
+  GLfloat lKs6[] = { 1.0, 1.0, 0.0, 1.0 };
 
   GLfloat lKa7[] = { 0.0, 0.0, 0.0, 1.0 };
   GLfloat lKd7[] = { 1.0, 0.0, 0.0, 1.0 };
   GLfloat lKs7[] = { 1.0, 0.0, 0.0, 1.0 };
 
-  // light positions and directions
-  GLfloat lP0[] = { -1.999, -1.999, -1.999, 1.0 };
-  GLfloat lP1[] = { 1.999, -1.999, -1.999, 1.0 };
-  GLfloat lP2[] = { 1.999, 1.999, -1.999, 1.0 };
-  GLfloat lP3[] = { -1.999, 1.999, -1.999, 1.0 };
-  GLfloat lP4[] = { -1.999, -1.999, 1.999, 1.0 };
-  GLfloat lP5[] = { 1.999, -1.999, 1.999, 1.0 };
-  GLfloat lP6[] = { 1.999, 1.999, 1.999, 1.0 };
-  GLfloat lP7[] = { -1.999, 1.999, 1.999, 1.0 };
+
+    GLfloat lP0[] = { -3.999, -3.999, -3.999, 1.0 };
+    GLfloat lP1[] = { 2.999, -2.999, -2.999, 1.0 };
+    GLfloat lP2[] = { 2.999, 2.999, -2.999, 1.0 };
+    GLfloat lP3[] = { -2.999, 2.999, -2.999, 1.0 };
+    GLfloat lP4[] = { -2.999, -2.999, 2.999, 1.0 };
+    GLfloat lP5[] = { 2.999, -2.999, 2.999, 1.0 };
+    GLfloat lP6[] = { 3.999, 3.999, 3.999, 1.0 };
+    GLfloat lP7[] = { 0.0, 0.0, 2.999, 1.0 };
   
   // jelly material color
   //GLfloat mKa[] = { 0.0, 0.7, 0.0, 1.0 };
   GLfloat mKa[] = { 0.0, 0.0, 0.0, 1.0 };
   //GLfloat mKd[] = { 0.5, 0.5, 0.5, 1.0 };
-  GLfloat mKd[] = { 0.3, 0.3, 0.3, 1.0 };
+  GLfloat mKd[] = { 0.4, 0.4, 0.4, 1.0 };
   GLfloat mKs[] = { 1.0, 1.0, 1.0, 1.0 };
   //GLfloat mKe[] = { 0.1, 0.1, 0.1, 1.0 };
   GLfloat mKe[] = { 0.0, 0.0, 0.0, 1.0 };
@@ -662,7 +662,7 @@ void display()
   glDisable(GL_LIGHTING);
 
   // show the bounding box
-  showBoundingBox();
+  showBoundingBox(&jello);
  
   glutSwapBuffers();
 }

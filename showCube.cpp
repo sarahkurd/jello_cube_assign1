@@ -228,7 +228,7 @@ void showCube(struct world * jello)
   glFrontFace(GL_CCW);
 }
 
-void showBoundingBox()
+void showBoundingBox(struct world *jello)
 {
   int i,j;
 
@@ -286,6 +286,21 @@ void showBoundingBox()
   
   glEnd();
 
+  // check if incline plane present
+  // ax + by + cz + d = 0
+  if (jello->incPlanePresent == 1) {
+      // set 2 coordinates to 0, and solve for the other coordinate
+      double z = (-1.0 * jello->d) / jello->c;
+      double y = (-1.0 * jello->d) / jello->b;
+      double x = (-1.0 * jello->d) / jello->a;
+
+      glColor4f(0.6,0.6,0.6,0);
+      glBegin(GL_TRIANGLES);
+          glVertex3f(0.0, 0.0, z);
+          glVertex3f(0.0, y, 0.0);
+          glVertex3f(x, 0.0, 0.0);
+      glEnd();
+  }
   return;
 }
 
