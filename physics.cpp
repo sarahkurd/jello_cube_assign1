@@ -19,6 +19,7 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
               a[i][j][k].x = jello->particleForces[i][j][k].x / jello->mass;
               a[i][j][k].y = jello->particleForces[i][j][k].y / jello->mass;
               a[i][j][k].z = jello->particleForces[i][j][k].z / jello->mass;
+              //printf("acc x:%f  y:%f   z:%f\n", a[i][j][k].x, a[i][j][k].y, a[i][j][k].z);
           }
       }
   }
@@ -50,9 +51,9 @@ struct point computeDamping(double k, struct point vectorBetweenPoints, struct p
     double magnitude = mag(L);
     pDIFFERENCE(velocityPointA, velocityPointB, difference)
     double numerator = dotProduct(difference, L);
+    numerator /= magnitude;
     double length; // used to normalize in pNormalize
     pNORMALIZE(L)
-    numerator /= magnitude;
     pMULTIPLY(L, numerator, dampingForce)
     pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
     return dampingForce;

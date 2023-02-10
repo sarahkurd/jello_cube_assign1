@@ -132,8 +132,8 @@ int main()
   // set the integrator and the physical parameters
   // the values below are EXAMPLES, to be modified by you as needed
   strcpy(jello.integrator,"RK4");
-  jello.dt=0.0005000;
-  jello.n=5;
+  jello.dt=0.0001000;
+  jello.n=1;
   jello.kElastic=500.0;
   jello.dElastic=0.25;
   jello.kCollision=1000.0;
@@ -162,9 +162,9 @@ int main()
         z = -2 + 4*(1.0 * k / (jello.resolution-1));
 
         jello.forceField[i * jello.resolution * jello.resolution 
-          + j * jello.resolution + k].x = 0.019531;
+          + j * jello.resolution + k].x = 0.0;
         jello.forceField[i * jello.resolution * jello.resolution 
-          + j * jello.resolution + k].y = -0.019531;
+          + j * jello.resolution + k].y = 0.0;
         jello.forceField[i * jello.resolution * jello.resolution 
           + j * jello.resolution + k].z = 0.0;
       }
@@ -177,12 +177,12 @@ int main()
         jello.p[i][j][k].x=1.0 * i / 7;
 	  	  jello.p[i][j][k].y=1.0 * j / 7;
 		    jello.p[i][j][k].z=1.0 * k / 7;
-         if ((i==7) && (j==7) && (k==7))
-         {
-           jello.p[i][j][k].x=1.0 + 1.0 / 7;
-	    	   jello.p[i][j][k].y=1.0 + 1.0 / 7;
-		       jello.p[i][j][k].z=1.0 + 1.0 / 7;
-         }
+//         if ((i==7) && (k==7) && (j==7))
+//         {
+//           jello.p[i][j][k].x=1.0 + 1.0 / 7;
+//	    	   jello.p[i][j][k].y=1.0 + 1.0 / 7;
+//		       jello.p[i][j][k].z=1.0 + 1.0 / 7;
+//         }
       }
 
   // set the velocities of control points
@@ -197,7 +197,7 @@ int main()
 
   // write the jello variable out to file on disk
   // change jello.w to whatever you need
-  writeWorld("rotate_n_equals_5.w",&jello);
+  writeWorld("mySkewed.w",&jello);
 
   return 0;
 }

@@ -28,7 +28,7 @@ int g_iLeftMouseButton,g_iMiddleMouseButton,g_iRightMouseButton;
 int sprite=0;
 
 // these variables control what is displayed on screen
-int shear=0, bend=0, structural=1, pause=0, viewingMode=0, saveScreenToFile=0;
+int shear=0, bend=0, structural=1, pause=0, viewingMode=1, saveScreenToFile=0;
 
 struct world jello;
 
@@ -36,6 +36,9 @@ struct world jello;
 struct spring *springs;
 
 double *intervals;
+
+struct point pointsOnInclinePlane[3];
+struct point inclinePlaneNormal;
 
 int windowWidth, windowHeight;
 
@@ -148,40 +151,27 @@ void buildSpringNetwork() {
  * Given the resolution of the force field,
  * create a list of intervals that represent that coordinates
  * where an interval starts and ends.
- * Ex: if resolution = 4 then we divide the -2 to 2 dimensions into
- * intervals = [-2, -1, 0, 1, 2]
  */
 void createIntervalsFromResolution() {
-    intervals = (double *)malloc((jello.resolution + 1) * sizeof(double));
-    double intervalSize = boundingCubeSide / jello.resolution;
-    double currentInterval = -2.0;
-    for (int i = 0; i <= jello.resolution; i++) {
-        intervals[i] = currentInterval;
-        currentInterval += intervalSize;
+    intervals = (double *)malloc((jello.resolution) * sizeof(double));
+    for (int i = 0; i < jello.resolution; i++) {
+        double coordinate = -2.0 + i * 4.0 / (jello.resolution - 1);
+        intervals[i] = coordinate;
     }
 }
 
 void getForceFieldInterval(double xyz, double xInterval[2]) {
     for (int i = 0; i < jello.resolution; i++) {
-        //printf("interval_min: %f   interval_max: %f\n", intervals[i], intervals[i + 1]);
         if (xyz >= intervals[i] && xyz <= intervals[i + 1]) {
             xInterval[0] = intervals[i];
             xInterval[1] = intervals[i + 1];
-            //printf("interval_min: %f   interval_max: %f\n", xInterval[0], xInterval[1]);
             break;
         }
     }
 }
 
-/**
- * Get the index of a coordinate on the force field
- * This is the index needed to get the force from the jello.forceField array
- * @param coordinate
- * @return The index for the given coordinate (i, j, or k)
- */
-int getIndex(double coordinate) {
-    int index = ((jello.resolution - 1) * (coordinate + 2)) / 4;
-    return index;
+int getIndexFromCoordinate(double coordinate) {
+    return ((jello.resolution - 1) * (coordinate + 2)) / 4;
 }
 
 /**
@@ -195,7 +185,7 @@ void getExternalForceAtPoints() {
             for (int k=0; k<=7; k++)
             {
                 struct point currPoint = jello.p[i][j][k];
-                // if point is not outside of the bounding cube
+                // if point is not outside of the bounding cube, then we can apply external force on it
                 if (!(currPoint.x < -2.0 || currPoint.x > 2.0 || currPoint.y < -2.0
                         || currPoint.y > 2.0 || currPoint.z < -2.0 || currPoint.z > 2.0)) {
                     double xInterval[2];
@@ -205,12 +195,12 @@ void getExternalForceAtPoints() {
                     getForceFieldInterval(currPoint.y, yInterval);
                     getForceFieldInterval(currPoint.z, zInterval);
 
-                    int index_x_min = getIndex(xInterval[0]);
-                    int index_x_max = getIndex(xInterval[1]);
-                    int index_y_min = getIndex(yInterval[0]);
-                    int index_y_max = getIndex(yInterval[1]);
-                    int index_z_min = getIndex(zInterval[0]);
-                    int index_z_max = getIndex(zInterval[1]);
+                    int index_x_min = getIndexFromCoordinate(xInterval[0]);
+                    int index_x_max = getIndexFromCoordinate(xInterval[1]);
+                    int index_y_min = getIndexFromCoordinate(yInterval[0]);
+                    int index_y_max = getIndexFromCoordinate(yInterval[1]);
+                    int index_z_min = getIndexFromCoordinate(zInterval[0]);
+                    int index_z_max = getIndexFromCoordinate(zInterval[1]);
 
                     struct point force1, force2, force3, force4, force5, force6, force7, force8;
 
@@ -285,34 +275,34 @@ void getExternalForceAtPoints() {
 
                     struct point finalTrilinearForce;
                     finalTrilinearForce.x =
-                            (1 - alpha) * (1 - beta) * (1 - gamma) * force1.x
-                            + (alpha) * (1 - beta) * (1 - gamma) * force5.x
-                            + (alpha) * (beta) * (1 - gamma) * force7.x
-                            + (1 - alpha) * (beta) * (1 - gamma) * force3.x
-                            + (1 - alpha) * (1 - beta) * (gamma) * force2.x
-                            + (1 - alpha) * (beta) * (gamma) * force4.x
-                            + (alpha) * (1 - beta) * (gamma) * force6.x
-                            + (alpha) * (beta) * (gamma) * force8.x;
+                            ((1 - alpha) * (1 - beta) * (1 - gamma) * force1.x)
+                            + ((alpha) * (1 - beta) * (1 - gamma) * force5.x)
+                            + ((alpha) * (beta) * (1 - gamma) * force7.x)
+                            + ((1 - alpha) * (beta) * (1 - gamma) * force3.x)
+                            + ((1 - alpha) * (1 - beta) * (gamma) * force2.x)
+                            + ((1 - alpha) * (beta) * (gamma) * force4.x)
+                            + ((alpha) * (1 - beta) * (gamma) * force6.x)
+                            + ((alpha) * (beta) * (gamma) * force8.x);
 
                     finalTrilinearForce.y =
-                            (1 - alpha) * (1 - beta) * (1 - gamma) * force1.y
-                            + (alpha) * (1 - beta) * (1 - gamma) * force5.y
-                            + (alpha) * (beta) * (1 - gamma) * force7.y
-                            + (1 - alpha) * (beta) * (1 - gamma) * force3.y
-                            + (1 - alpha) * (1 - beta) * (gamma) * force2.y
-                            + (1 - alpha) * (beta) * (gamma) * force4.y
-                            + (alpha) * (1 - beta) * (gamma) * force6.y
-                            + (alpha) * (beta) * (gamma) * force8.y;
+                            ((1 - alpha) * (1 - beta) * (1 - gamma) * force1.y)
+                            + ((alpha) * (1 - beta) * (1 - gamma) * force5.y)
+                            + ((alpha) * (beta) * (1 - gamma) * force7.y)
+                            + ((1 - alpha) * (beta) * (1 - gamma) * force3.y)
+                            + ((1 - alpha) * (1 - beta) * (gamma) * force2.y)
+                            + ((1 - alpha) * (beta) * (gamma) * force4.y)
+                            + ((alpha) * (1 - beta) * (gamma) * force6.y)
+                            + ((alpha) * (beta) * (gamma) * force8.y);
 
                     finalTrilinearForce.z =
-                            (1 - alpha) * (1 - beta) * (1 - gamma) * force1.z
-                            + (alpha) * (1 - beta) * (1 - gamma) * force5.z
-                            + (alpha) * (beta) * (1 - gamma) * force7.z
-                            + (1 - alpha) * (beta) * (1 - gamma) * force3.z
-                            + (1 - alpha) * (1 - beta) * (gamma) * force2.z
-                            + (1 - alpha) * (beta) * (gamma) * force4.z
-                            + (alpha) * (1 - beta) * (gamma) * force6.z
-                            + (alpha) * (beta) * (gamma) * force8.z;
+                            ((1 - alpha) * (1 - beta) * (1 - gamma) * force1.z)
+                            + ((alpha) * (1 - beta) * (1 - gamma) * force5.z)
+                            + ((alpha) * (beta) * (1 - gamma) * force7.z)
+                            + ((1 - alpha) * (beta) * (1 - gamma) * force3.z)
+                            + ((1 - alpha) * (1 - beta) * (gamma) * force2.z)
+                            + ((1 - alpha) * (beta) * (gamma) * force4.z)
+                            + ((alpha) * (1 - beta) * (gamma) * force6.z)
+                            + ((alpha) * (beta) * (gamma) * force8.z);
 
                     // Add this force to the particle forces
                     //printf("final force x: %f  y: %f  z:%f\n", finalTrilinearForce.x, finalTrilinearForce.y,finalTrilinearForce.z);
@@ -352,20 +342,113 @@ void findCollisionPoint(int i, int j, int k, struct point *collisionPoint) {
     }
 }
 
+/**
+ * If incline plane exists, call this function once.
+ * Determines 3 points on the incline plane.
+ */
+void getPointsOnInclinePlane() {
+    // set 2 coordinates to 0, and solve for the other coordinate
+    double z = (-1.0 * jello.d) / jello.c;
+    double y = (-1.0 * jello.d) / jello.b;
+    double x = (-1.0 * jello.d) / jello.a;
+    struct point coord1, coord2, coord3;
+    coord1.x = 0.0;
+    coord1.y = 0.0;
+    coord1.z = z;
+    coord2.x = 0.0;
+    coord2.y = y;
+    coord2.z = 0.0;
+    coord3.x = x;
+    coord3.y = 0.0;
+    coord3.z = 0.0;
+    pointsOnInclinePlane[0] = coord1;
+    pointsOnInclinePlane[1] = coord2;
+    pointsOnInclinePlane[2] = coord3;
+}
+
+/**
+ * If incline plane exists, run this function once.
+ * Returns a vector that is normal to the incline plane.
+ * @return  A struct point representing the normal vector.
+ */
+struct point getPlaneNormal() {
+    struct point normal;
+    struct point vec1;
+    struct point vec2;
+    pDIFFERENCE(pointsOnInclinePlane[1], pointsOnInclinePlane[0], vec1)
+    pDIFFERENCE(pointsOnInclinePlane[2], pointsOnInclinePlane[0], vec2)
+    CROSSPRODUCTp(vec1, vec2, normal);
+    return normal;
+}
+
+/**
+ * Given a point on the cube, first find the vector between that point
+ * and a point on the plane.
+ * Do a dot product with the normal vector of the plane to determine
+ * if the point is on the normal side or non normal side of the plane.
+ */
+bool isPointCollidedWithPlane(struct point cubePoint) {
+    struct point vec;
+    pDIFFERENCE(cubePoint, pointsOnInclinePlane[0], vec)
+    double dot = dotProduct(vec, inclinePlaneNormal);
+    if (dot <= 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Find the closest point on the incline plane to the given cube point
+ * We get the equation of a line that goes through  the cube point and is perpendicular to the plane.
+ * @param cubePoint
+ * @return
+ */
+struct point getClosestPointOnPlaneToConnectSpring(struct point cubePoint) {
+    double x = cubePoint.x * jello.a;
+    double xt = inclinePlaneNormal.x * jello.a;
+    double y = cubePoint.y * jello.b;
+    double yt = inclinePlaneNormal.y * jello.b;
+    double z = cubePoint.z * jello.c;
+    double zt = inclinePlaneNormal.z * jello.c;
+    double finalT = ((-1.0 * jello.d) - (x + y + z)) / (xt + yt + zt);
+
+    struct point closestPoint;
+    closestPoint.x = inclinePlaneNormal.x * finalT + cubePoint.x;
+    closestPoint.y = inclinePlaneNormal.y * finalT + cubePoint.y;
+    closestPoint.z = inclinePlaneNormal.z * finalT + cubePoint.z;
+    return closestPoint;
+}
+
+/**
+ * Check for any collisions between the cube and the bounding box.
+ * Create a new spring if there is a collisions,
+ * and the spring to our list of springs.
+ */
 void checkCollision() {
     for (int i=0; i<=7; i++)
         for (int j=0; j<=7; j++)
             for (int k=0; k<=7; k++)
             {
                 struct point p = jello.p[i][j][k];
-                if (p.x >= 2.0 || p.x <= -2.0 || p.y >= 2.0 || p.y <= -2.0 || p.z >= 2.0 || p.z <= -2.0) {
-                    // create a point, the collision point, that will have the
+                bool planeCollision = false;
+                if (jello.incPlanePresent == 1) {
+                    planeCollision = isPointCollidedWithPlane(p);
+                }
+                if (p.x >= 2.0 || p.x <= -2.0 || p.y >= 2.0
+                        || p.y <= -2.0 || p.z >= 2.0 || p.z <= -2.0 ||
+                        planeCollision
+                   ) {
                     struct point cubePoint;
                     struct point collisionPoint;
                     cubePoint.x = i;
                     cubePoint.y = j;
                     cubePoint.z = k;
-                    findCollisionPoint(i, j, k, &collisionPoint);
+                    if (planeCollision) {
+                        collisionPoint = getClosestPointOnPlaneToConnectSpring(p);
+                    } else {
+                        findCollisionPoint(i, j, k, &collisionPoint);
+                    }
 
                     struct spring *collisionSpring;
                     collisionSpring = (struct spring*) malloc(sizeof(struct spring));
@@ -407,7 +490,8 @@ void clearParticleForces() {
 
 /**
  * Iterate through the list of springs and calculate hooks force and damping force.
- * Store the total force on each particle in a new 3D array of forces
+ * Store the total force on each particle in a new 3D array of forces.
+ * Lastly, if external forces exist, call the function to calculate external forces at the end.
  */
 void calculateForcesOnParticles() {
     // clear all previous forces from previous iterations
@@ -719,6 +803,10 @@ int main (int argc, char ** argv)
   // build spring network once we have loaded the world
   buildSpringNetwork();
   createIntervalsFromResolution();
+  if (jello.incPlanePresent == 1) {
+      getPointsOnInclinePlane();
+      inclinePlaneNormal = getPlaneNormal();
+  }
 
   glutInit(&argc,argv);
   
