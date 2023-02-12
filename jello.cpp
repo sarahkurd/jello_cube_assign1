@@ -558,136 +558,103 @@ void calculateForcesOnParticles() {
 
 void myinit()
 {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(90.0,1.0,0.01,1000.0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(90.0,1.0,0.01,1000.0);
 
-  // set background color to grey
-  glClearColor(0.0, 0.5, 0.5, 0.0);
+    // set background color to grey
+    glClearColor(0.0, 0.5, 0.5, 0.0);
 
-  //glCullFace(GL_BACK);
-  //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
 
-  glShadeModel(GL_SMOOTH);
-  glEnable(GL_POLYGON_SMOOTH);
-  glEnable(GL_LINE_SMOOTH);
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_POLYGON_SMOOTH);
+    glEnable(GL_LINE_SMOOTH);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 
-  return; 
+    return;
 }
 
 void reshape(int w, int h) 
 {
-  // Prevent a divide by zero, when h is zero.
-  // You can't make a window of zero height.
-  if(h == 0)
+    // Prevent a divide by zero, when h is zero.
+    // You can't make a window of zero height.
+    if(h == 0)
     h = 1;
 
-  glViewport(0, 0, w, h);
+    glViewport(0, 0, w, h);
 
-  // Reset the coordinate system before modifying
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  // Set the perspective
-  double aspectRatio = 1.0 * w / h;
-  gluPerspective(60.0f, aspectRatio, 0.01f, 1000.0f);
+    // Reset the coordinate system before modifying
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    // Set the perspective
+    double aspectRatio = 1.0 * w / h;
+    gluPerspective(60.0f, aspectRatio, 0.01f, 1000.0f);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity(); 
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-  windowWidth = w;
-  windowHeight = h;
+    windowWidth = w;
+    windowHeight = h;
 
-  glutPostRedisplay();
+    glutPostRedisplay();
 }
 
 void display()
 {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-  // camera parameters are Phi, Theta, R
-  gluLookAt(R * cos(Phi) * cos (Theta), R * sin(Phi) * cos (Theta), R * sin (Theta),
-	        0.0,0.0,0.0, 0.0,0.0,1.0);
+    // camera parameters are Phi, Theta, R
+    gluLookAt(R * cos(Phi) * cos (Theta), R * sin(Phi) * cos (Theta), R * sin (Theta),
+            0.0,0.0,0.0, 0.0,0.0,1.0);
 
 
-  /* Lighting */
-  /* You are encouraged to change lighting parameters or make improvements/modifications
-     to the lighting model . 
-     This way, you will personalize your assignment and your assignment will stick out. 
-  */
+    /* Lighting */
+    /* You are encouraged to change lighting parameters or make improvements/modifications
+     to the lighting model .
+     This way, you will personalize your assignment and your assignment will stick out.
+    */
 
-  // global ambient light
-  //GLfloat aGa[] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat aGa[] = { 0.0, 0.0, 0.0, 1.0 };
+    // global ambient light
+    GLfloat aGa[] = { 1.0, 1.0, 1.0, 1.0 };
 
-   // light 's ambient, diffuse, specular
-  // GLfloat lKa0[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd0[] = { 1.0, 1.0, 1.0, 1.0 };
-  // GLfloat lKs0[] = { 1.0, 1.0, 1.0, 1.0 };
+    // light 's ambient, diffuse, specular
+    GLfloat lKa0[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd0[] = { 0.0, 0.5, 0.7, 1.0 };
+    GLfloat lKs0[] = { 0.0, 0.5, 0.7, 1.0 };
 
-  // GLfloat lKa1[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd1[] = { 1.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKs1[] = { 1.0, 0.0, 0.0, 1.0 };
+    GLfloat lKa1[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd1[] = { 1.0, 0.0, 1.0, 1.0 };
+    GLfloat lKs1[] = { 1.0, 0.0, 1.0, 1.0 };
 
-  // GLfloat lKa2[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd2[] = { 1.0, 1.0, 0.0, 1.0 };
-  // GLfloat lKs2[] = { 1.0, 1.0, 0.0, 1.0 };
+    GLfloat lKa2[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd2[] = { 0.0, 1.0, 1.0, 1.0 };
+    GLfloat lKs2[] = { 0.0, 1.0, 1.0, 1.0 };
 
-  // GLfloat lKa3[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd3[] = { 0.0, 1.0, 1.0, 1.0 };
-  // GLfloat lKs3[] = { 0.0, 1.0, 1.0, 1.0 };
+    GLfloat lKa3[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd3[] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat lKs3[] = { 1.0, 1.0, 1.0, 1.0 };
 
-  // GLfloat lKa4[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd4[] = { 0.0, 0.0, 1.0, 1.0 };
-  // GLfloat lKs4[] = { 0.0, 0.0, 1.0, 1.0 };
+    GLfloat lKa4[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd4[] = { 1.0, 0.0, 0.0, 1.0 };
+    GLfloat lKs4[] = { 1.0, 0.0, 0.0, 1.0 };
 
-  // GLfloat lKa5[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd5[] = { 1.0, 0.0, 1.0, 1.0 };
-  // GLfloat lKs5[] = { 1.0, 0.0, 1.0, 1.0 };
+    GLfloat lKa5[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd5[] = { 1.0, 0.0, 1.0, 1.0 };
+    GLfloat lKs5[] = { 1.0, 0.0, 1.0, 1.0 };
 
-  // GLfloat lKa6[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd6[] = { 1.0, 1.0, 1.0, 1.0 };
-  // GLfloat lKs6[] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat lKa6[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd6[] = { 1.0, 1.0, 0.0, 1.0 };
+    GLfloat lKs6[] = { 1.0, 1.0, 0.0, 1.0 };
 
-  // GLfloat lKa7[] = { 0.0, 0.0, 0.0, 1.0 };
-  // GLfloat lKd7[] = { 0.0, 1.0, 1.0, 1.0 };
-  // GLfloat lKs7[] = { 0.0, 1.0, 1.0, 1.0 };
-  
-  // light 's ambient, diffuse, specular
-  GLfloat lKa0[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd0[] = { 0.0, 0.5, 0.7, 1.0 };
-  GLfloat lKs0[] = { 0.0, 0.5, 0.7, 1.0 };
-
-  GLfloat lKa1[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd1[] = { 1.0, 0.0, 1.0, 1.0 };
-  GLfloat lKs1[] = { 1.0, 0.0, 1.0, 1.0 };
-
-  GLfloat lKa2[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd2[] = { 0.0, 1.0, 1.0, 1.0 };
-  GLfloat lKs2[] = { 0.0, 1.0, 1.0, 1.0 };
-
-  GLfloat lKa3[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd3[] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat lKs3[] = { 1.0, 1.0, 1.0, 1.0 };
-
-  GLfloat lKa4[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd4[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs4[] = { 1.0, 0.0, 0.0, 1.0 };
-
-  GLfloat lKa5[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd5[] = { 1.0, 0.0, 1.0, 1.0 };
-  GLfloat lKs5[] = { 1.0, 0.0, 1.0, 1.0 };
-
-  GLfloat lKa6[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd6[] = { 1.0, 1.0, 0.0, 1.0 };
-  GLfloat lKs6[] = { 1.0, 1.0, 0.0, 1.0 };
-
-  GLfloat lKa7[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat lKd7[] = { 1.0, 0.0, 0.0, 1.0 };
-  GLfloat lKs7[] = { 1.0, 0.0, 0.0, 1.0 };
-
+    GLfloat lKa7[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat lKd7[] = { 1.0, 0.0, 0.0, 1.0 };
+    GLfloat lKs7[] = { 1.0, 0.0, 0.0, 1.0 };
 
     GLfloat lP0[] = { -3.999, -3.999, -3.999, 1.0 };
     GLfloat lP1[] = { 2.999, -2.999, -2.999, 1.0 };
@@ -698,57 +665,54 @@ void display()
     GLfloat lP6[] = { 3.999, 3.999, 3.999, 1.0 };
     GLfloat lP7[] = { 0.0, 0.0, 2.999, 1.0 };
   
-  // jelly material color
-  //GLfloat mKa[] = { 0.0, 0.7, 0.0, 1.0 };
-  GLfloat mKa[] = { 0.0, 0.0, 0.0, 1.0 };
-  //GLfloat mKd[] = { 0.5, 0.5, 0.5, 1.0 };
-  GLfloat mKd[] = { 0.4, 0.4, 0.4, 1.0 };
-  GLfloat mKs[] = { 1.0, 1.0, 1.0, 1.0 };
-  //GLfloat mKe[] = { 0.1, 0.1, 0.1, 1.0 };
-  GLfloat mKe[] = { 0.0, 0.0, 0.0, 1.0 };
+    // jelly material color
+    GLfloat mKa[] = { 0.0, 0.0, 0.0, 1.0 };
+    GLfloat mKd[] = { 0.4, 0.4, 0.4, 0.8 };
+    GLfloat mKs[] = { 1.0, 1.0, 1.0, 1.0 };
+    GLfloat mKe[] = { 0.0, 0.0, 0.0, 1.0 };
 
-  /* set up lighting */
-  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, aGa);
-  glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-  glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+    /* set up lighting */
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, aGa);
+    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+    glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
 
-  // set up cube color
-  glMaterialfv(GL_FRONT, GL_AMBIENT, mKa);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE, mKd);
-  glMaterialfv(GL_FRONT, GL_SPECULAR, mKs);
-  glMaterialfv(GL_FRONT, GL_EMISSION, mKe);
-  glMaterialf(GL_FRONT, GL_SHININESS, 120);
+    // set up cube color
+    glMaterialfv(GL_FRONT, GL_AMBIENT, mKa);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, mKd);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, mKs);
+    glMaterialfv(GL_FRONT, GL_EMISSION, mKe);
+    glMaterialf(GL_FRONT, GL_SHININESS, 120);
     
-  // macro to set up light i
-  #define LIGHTSETUP(i)\
-  glLightfv(GL_LIGHT##i, GL_POSITION, lP##i);\
-  glLightfv(GL_LIGHT##i, GL_AMBIENT, lKa##i);\
-  glLightfv(GL_LIGHT##i, GL_DIFFUSE, lKd##i);\
-  glLightfv(GL_LIGHT##i, GL_SPECULAR, lKs##i);\
-  glEnable(GL_LIGHT##i)
-  
-  LIGHTSETUP (0);
-  LIGHTSETUP (1);
-  LIGHTSETUP (2);
-  LIGHTSETUP (3);
-  LIGHTSETUP (4);
-  LIGHTSETUP (5);
-  LIGHTSETUP (6);
-  LIGHTSETUP (7);
+    // macro to set up light i
+    #define LIGHTSETUP(i)\
+    glLightfv(GL_LIGHT##i, GL_POSITION, lP##i);\
+    glLightfv(GL_LIGHT##i, GL_AMBIENT, lKa##i);\
+    glLightfv(GL_LIGHT##i, GL_DIFFUSE, lKd##i);\
+    glLightfv(GL_LIGHT##i, GL_SPECULAR, lKs##i);\
+    glEnable(GL_LIGHT##i)
 
-  // enable lighting
-  glEnable(GL_LIGHTING);    
-  glEnable(GL_DEPTH_TEST);
+    LIGHTSETUP (0);
+    LIGHTSETUP (1);
+    LIGHTSETUP (2);
+    LIGHTSETUP (3);
+    LIGHTSETUP (4);
+    LIGHTSETUP (5);
+    LIGHTSETUP (6);
+    LIGHTSETUP (7);
 
-  // show the cube
-  showCube(&jello);
+    // enable lighting
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
 
-  glDisable(GL_LIGHTING);
+    // show the cube
+    showCube(&jello);
 
-  // show the bounding box
-  showBoundingBox(&jello);
- 
-  glutSwapBuffers();
+    glDisable(GL_LIGHTING);
+
+    // show the bounding box
+    showBoundingBox(&jello);
+
+    glutSwapBuffers();
 }
 
 void doIdle()
@@ -789,6 +753,21 @@ void doIdle()
   glutPostRedisplay();
 }
 
+void checkIfPlaneNormalCorrectToStart() {
+    struct point cubePoint = jello.p[0][0][0];
+    struct point vec;
+    vec.x = cubePoint.x - pointsOnInclinePlane[0].x;
+    vec.y = cubePoint.y - pointsOnInclinePlane[0].y;
+    vec.z = cubePoint.z - pointsOnInclinePlane[0].z;
+    double dot = dotProduct(vec, inclinePlaneNormal);
+    if (dot < 0) { //this means th cube is on the opposite side of the normal to start
+        // flip the direction of the normal
+        inclinePlaneNormal.x = -1.0 * inclinePlaneNormal.x;
+        inclinePlaneNormal.y = -1.0 * inclinePlaneNormal.y;
+        inclinePlaneNormal.z = -1.0 * inclinePlaneNormal.z;
+    }
+}
+
 int main (int argc, char ** argv)
 {
   if (argc<2)
@@ -806,6 +785,9 @@ int main (int argc, char ** argv)
   if (jello.incPlanePresent == 1) {
       getPointsOnInclinePlane();
       inclinePlaneNormal = getPlaneNormal();
+      // now, check that the cube is on the side of the normal to start.
+      // If it is not, then flip the direction of the plane normal.
+      checkIfPlaneNormalCorrectToStart();
   }
 
   glutInit(&argc,argv);

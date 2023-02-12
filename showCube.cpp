@@ -232,7 +232,7 @@ void showBoundingBox(struct world *jello)
 {
   int i,j;
 
-  glColor4f(0.6,0.6,0.6,0);
+  glColor4f(0.6,0.6,0.6,1.0);
 
   glBegin(GL_LINES);
 
@@ -294,7 +294,7 @@ void showBoundingBox(struct world *jello)
       double y = (-1.0 * jello->d) / jello->b;
       double x = (-1.0 * jello->d) / jello->a;
 
-      glColor4f(0.6,0.6,0.6,0);
+      glColor4f(0.0,0.6,0.0,0.5);
       glBegin(GL_TRIANGLES);
           glVertex3f(0.0, 0.0, z);
           glVertex3f(0.0, y, 0.0);
