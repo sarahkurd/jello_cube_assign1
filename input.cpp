@@ -36,28 +36,32 @@ void saveScreenshot(int windowWidth, int windowHeight, char *filename)
 /* converts mouse drags into information about rotation/translation/scaling */
 void mouseMotionDrag(int x, int y)
 {
-  int vMouseDelta[2] = {x-g_vMousePos[0], y-g_vMousePos[1]};
+    int vMouseDelta[2] = {x-g_vMousePos[0], y-g_vMousePos[1]};
 
-  if (g_iRightMouseButton) // handle camera rotations
-  {
+    if (g_iRightMouseButton) // handle camera rotations
+    {
     Phi += vMouseDelta[0] * 0.01;
     Theta += vMouseDelta[1] * 0.01;
-    
+
     if (Phi>2*pi)
       Phi -= 2*pi;
-    
+
     if (Phi<0)
       Phi += 2*pi;
-    
+
     if (Theta>pi / 2 - 0.01) // dont let the point enter the north pole
       Theta = pi / 2 - 0.01;
-    
+
     if (Theta<- pi / 2 + 0.01)
       Theta = -pi / 2 + 0.01;
-    
+
+    } else if (g_iLeftMouseButton) { //handle user adding a force to cube by left click and dragging mouse
+        printf("Left mouse coord: %i     right mouse coord: %i\n", vMouseDelta[0], vMouseDelta[1]);
+        double f = vMouseDelta[0] * 0.5;
+        double f2 = vMouseDelta[1] * 0.5;
+    }
     g_vMousePos[0] = x;
     g_vMousePos[1] = y;
-  }
 }
 
 void mouseMotion (int x, int y)

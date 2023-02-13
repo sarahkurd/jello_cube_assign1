@@ -17,7 +17,8 @@
 double Theta = pi / 6;
 double Phi = pi / 6;
 double R = 6;
-double boundingCubeSide = 4.0;
+
+//PerformanceCounter performanceCounter = PerformanceCounter();
 
 // mouse control
 int g_iMenuId;
@@ -64,7 +65,7 @@ double getSpringLength(SPRING s){
         length = 2.0 / 7.0;
         break;
     case COLLISION:
-        length = 0;
+        length = 0.0;
         break;
   }
   return length;
@@ -117,8 +118,8 @@ void connectSprings(int i, int j, int k, int i_connect, int j_connect, int k_con
 }
 
 /**
- * Connect the jello cube with structural, shear, and bend spring
- * The list of spring starts at [springList]
+ * Connect the jello cube with structural, shear, and bend springs.
+ * The list of springs starts at [springList].
  */
 void buildSpringNetwork() {
   for (int i=0; i<=7; i++)
@@ -149,8 +150,7 @@ void buildSpringNetwork() {
 
 /**
  * Given the resolution of the force field,
- * create a list of intervals that represent that coordinates
- * where an interval starts and ends.
+ * create a list of the intervals in the 3D force grid.
  */
 void createIntervalsFromResolution() {
     intervals = (double *)malloc((jello.resolution) * sizeof(double));
@@ -160,6 +160,12 @@ void createIntervalsFromResolution() {
     }
 }
 
+/**
+ * Given a coordinate, determine what interval it falls in.
+ * This will be the min and max coordinates of the point in either the x,y,z dimensions.
+ * @param xyz A double coordinate
+ * @param xInterval Used to set the minimum and maximum values of the interval for this given coordinate
+ */
 void getForceFieldInterval(double xyz, double xInterval[2]) {
     for (int i = 0; i < jello.resolution; i++) {
         if (xyz >= intervals[i] && xyz <= intervals[i + 1]) {
@@ -170,12 +176,17 @@ void getForceFieldInterval(double xyz, double xInterval[2]) {
     }
 }
 
+/**
+ * Given a coordinate, use the given formula to determine which index it is in the jello.forceField array
+ * @param coordinate A double coordinate value
+ * @return An integer representing an index into the jello.forceField array
+ */
 int getIndexFromCoordinate(double coordinate) {
     return ((jello.resolution - 1) * (coordinate + 2)) / 4;
 }
 
 /**
- * Iterate through each point in the cube and interpolate the forces around it
+ * Iterate through each point in the cube and interpolate the forces around it.
  * Assign the interpolated value as the external force field on that point,
  * and add to the force in jello.particleForces[i][j][k] .
  */
@@ -313,6 +324,10 @@ void getExternalForceAtPoints() {
             }
 }
 
+/**
+ * Given the position of a point in the jello cube, depending on where that point collided,
+ * create the collision point by clamping to -2 or 2 and setting it as the collision point.
+ */
 void findCollisionPoint(int i, int j, int k, struct point *collisionPoint) {
     struct point p = jello.p[i][j][k];
     if (p.x >= 2.0) {
@@ -482,9 +497,9 @@ void clearParticleForces() {
         for (int j=0; j<=7; j++)
             for (int k=0; k<=7; k++)
             {
-                jello.particleForces[i][j][k].x = 0;
-                jello.particleForces[i][j][k].y = 0;
-                jello.particleForces[i][j][k].z = 0;
+                jello.particleForces[i][j][k].x = 0.0;
+                jello.particleForces[i][j][k].y = 0.0;
+                jello.particleForces[i][j][k].z = 0.0;
             }
 }
 
@@ -717,29 +732,33 @@ void display()
 
 void doIdle()
 {
-  char s[20]="picxxxx.ppm";
-  int i;
-  
-  // save screen to file
-  s[3] = 48 + (sprite / 1000);
-  s[4] = 48 + (sprite % 1000) / 100;
-  s[5] = 48 + (sprite % 100 ) / 10;
-  s[6] = 48 + sprite % 10;
+//    performanceCounter.StopCounter();
+//    printf("Frames per second = %f\n", 1.0/performanceCounter.GetElapsedTime());
+//    performanceCounter.StartCounter();
 
-  if (saveScreenToFile==1)
-  {
+    char s[20]="picxxxx.ppm";
+    int i;
+
+    // save screen to file
+    s[3] = 48 + (sprite / 1000);
+    s[4] = 48 + (sprite % 1000) / 100;
+    s[5] = 48 + (sprite % 100 ) / 10;
+    s[6] = 48 + sprite % 10;
+
+    if (saveScreenToFile==1)
+    {
     saveScreenshot(windowWidth, windowHeight, s);
     saveScreenToFile=0; // save only once, change this if you want continuos image generation (i.e. animation)
     sprite++;
-  }
+    }
 
-  if (sprite >= 300) // allow only 300 snapshots
-  {
-    exit(0);	
-  }
+    if (sprite >= 300) // allow only 300 snapshots
+    {
+    exit(0);
+    }
 
-  if (pause == 0)
-  {
+    if (pause == 0)
+    {
     // insert code which appropriately performs one step of the cube simulation:
     for (i = 1; i <= jello.n; i++) {
         checkCollision();
@@ -749,10 +768,15 @@ void doIdle()
         if (jello.integrator[0]=='R') // RK4
             RK4(&jello);
     }
-  }
-  glutPostRedisplay();
+    }
+    glutPostRedisplay();
 }
 
+/**
+ * If the normal vector of the plane is facing in the opposite
+ * direction of the jello cube to start the simulation,
+ * then flip the direction of the plane's normal vector.
+ */
 void checkIfPlaneNormalCorrectToStart() {
     struct point cubePoint = jello.p[0][0][0];
     struct point vec;
@@ -770,64 +794,64 @@ void checkIfPlaneNormalCorrectToStart() {
 
 int main (int argc, char ** argv)
 {
-  if (argc<2)
-  {  
+    if (argc<2)
+    {
     printf ("Oops! You didn't say the jello world file!\n");
     printf ("Usage: %s [worldfile]\n", argv[0]);
     exit(0);
-  }
+    }
 
-  readWorld(argv[1],&jello);
+    readWorld(argv[1],&jello);
 
-  // build spring network once we have loaded the world
-  buildSpringNetwork();
-  createIntervalsFromResolution();
-  if (jello.incPlanePresent == 1) {
+    // build spring network once we have loaded the world
+    buildSpringNetwork();
+    createIntervalsFromResolution();
+    if (jello.incPlanePresent == 1) {
       getPointsOnInclinePlane();
       inclinePlaneNormal = getPlaneNormal();
       // now, check that the cube is on the side of the normal to start.
       // If it is not, then flip the direction of the plane normal.
       checkIfPlaneNormalCorrectToStart();
-  }
+    }
 
-  glutInit(&argc,argv);
-  
-  /* double buffered window, use depth testing, 640x480 */
-  glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-  
-  windowWidth = 640;
-  windowHeight = 480;
-  glutInitWindowSize (windowWidth, windowHeight);
-  glutInitWindowPosition (0,0);
-  glutCreateWindow ("Jello cube");
+    glutInit(&argc,argv);
 
-  /* tells glut to use a particular display function to redraw */
-  glutDisplayFunc(display);
+    /* double buffered window, use depth testing, 640x480 */
+    glutInitDisplayMode (GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
-  /* replace with any animate code */
-  glutIdleFunc(doIdle);
+    windowWidth = 640;
+    windowHeight = 480;
+    glutInitWindowSize (windowWidth, windowHeight);
+    glutInitWindowPosition (0,0);
+    glutCreateWindow ("Jello cube");
 
-  /* callback for mouse drags */
-  glutMotionFunc(mouseMotionDrag);
+    /* tells glut to use a particular display function to redraw */
+    glutDisplayFunc(display);
 
-  /* callback for window size changes */
-  glutReshapeFunc(reshape);
+    /* replace with any animate code */
+    glutIdleFunc(doIdle);
 
-  /* callback for mouse movement */
-  glutPassiveMotionFunc(mouseMotion);
+    /* callback for mouse drags */
+    glutMotionFunc(mouseMotionDrag);
 
-  /* callback for mouse button changes */
-  glutMouseFunc(mouseButton);
+    /* callback for window size changes */
+    glutReshapeFunc(reshape);
 
-  /* register for keyboard events */
-  glutKeyboardFunc(keyboardFunc);
+    /* callback for mouse movement */
+    glutPassiveMotionFunc(mouseMotion);
 
-  /* do initialization */
-  myinit();
+    /* callback for mouse button changes */
+    glutMouseFunc(mouseButton);
 
-  /* forever sink in the black hole */
-  glutMainLoop();
+    /* register for keyboard events */
+    glutKeyboardFunc(keyboardFunc);
 
-  return(0);
+    /* do initialization */
+    myinit();
+
+    /* forever sink in the black hole */
+    glutMainLoop();
+
+    return(0);
 }
 

@@ -85,7 +85,7 @@ void showCube(struct world * jello)
             continue;
 
           glBegin(GL_POINTS); // draw point
-            glColor4f(0,0,0,0);  
+            glColor4f(0,0,0,1.0);
             glVertex3f(jello->p[i][j][k].x,jello->p[i][j][k].y,jello->p[i][j][k].z);        
           glEnd();
 
@@ -290,16 +290,29 @@ void showBoundingBox(struct world *jello)
   // ax + by + cz + d = 0
   if (jello->incPlanePresent == 1) {
       // set 2 coordinates to 0, and solve for the other coordinate
-      double z = (-1.0 * jello->d) / jello->c;
-      double y = (-1.0 * jello->d) / jello->b;
-      double x = (-1.0 * jello->d) / jello->a;
+      struct point point1, point2, point3, point4;
+      point1.x = 2;
+      point1.y = 2;
+      point2.x = 2;
+      point2.y = -2;
+      point3.x = -2;
+      point3.y = 2;
+      point4.x = -2;
+      point4.y = -2;
+
+      point1.z = ((-1.0 * jello->d) - (jello->a * point1.x + jello->b * point1.y)) / jello->c;
+      point2.z = ((-1.0 * jello->d) - (jello->a * point2.x + jello->b * point2.y)) / jello->c;
+      point3.z = ((-1.0 * jello->d) - (jello->a * point3.x + jello->b * point3.y)) / jello->c;
+      point4.z = ((-1.0 * jello->d) - (jello->a * point4.x + jello->b * point4.y)) / jello->c;
 
       glColor4f(0.0,0.6,0.0,0.5);
-      glBegin(GL_TRIANGLES);
-          glVertex3f(0.0, 0.0, z);
-          glVertex3f(0.0, y, 0.0);
-          glVertex3f(x, 0.0, 0.0);
+      glBegin(GL_TRIANGLE_STRIP);
+        glVertex3f(point1.x, point1.y, point1.z);
+        glVertex3f(point2.x, point2.y, point2.z);
+        glVertex3f(point3.x, point3.y, point3.z);
+        glVertex3f(point4.x, point4.y, point4.z);
       glEnd();
+
   }
   return;
 }

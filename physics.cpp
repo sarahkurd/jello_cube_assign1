@@ -19,7 +19,6 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
               a[i][j][k].x = jello->particleForces[i][j][k].x / jello->mass;
               a[i][j][k].y = jello->particleForces[i][j][k].y / jello->mass;
               a[i][j][k].z = jello->particleForces[i][j][k].z / jello->mass;
-              //printf("acc x:%f  y:%f   z:%f\n", a[i][j][k].x, a[i][j][k].y, a[i][j][k].z);
           }
       }
   }
@@ -33,12 +32,12 @@ struct point computeHooks(double k, double restLength, struct point vectorBetwee
     struct point hooksForce;
     struct point L = vectorBetweenPoints;
     double magnitude = mag(L);
-    double length; // used to normalize in pNormalize
-    pNORMALIZE(L)
     double displacement = magnitude - restLength;
-    if (abs(displacement) <= 0.00001) {
+    if (abs(displacement) <= 0.0001) {
         displacement = 0.0;
     }
+    double length; // used to normalize in pNormalize
+    pNORMALIZE(L)
     pMULTIPLY(L, displacement, L)
     pMULTIPLY(L, -1.0 * k, hooksForce)
     return hooksForce;
@@ -48,14 +47,21 @@ struct point computeDamping(double k, struct point vectorBetweenPoints, struct p
     struct point dampingForce;
     struct point difference;
     struct point L = vectorBetweenPoints;
-    double magnitude = mag(L);
-    pDIFFERENCE(velocityPointA, velocityPointB, difference)
-    double numerator = dotProduct(difference, L);
-    numerator /= magnitude;
-    double length; // used to normalize in pNormalize
-    pNORMALIZE(L)
-    pMULTIPLY(L, numerator, dampingForce)
-    pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
+    if (velocityPointA.x == 0.0 && velocityPointA.y == 0.0 && velocityPointA.z == 0.0 &&
+            velocityPointB.x == 0.0 && velocityPointB.y == 0.0 && velocityPointB.z == 0.0) {
+        dampingForce.x = 0.0;
+        dampingForce.y = 0.0;
+        dampingForce.z = 0.0;
+    } else {
+        double magnitude = mag(L);
+        pDIFFERENCE(velocityPointA, velocityPointB, difference)
+        double numerator = dotProduct(difference, L);
+        numerator = numerator / magnitude;
+        double length; // used to normalize in pNormalize
+        pNORMALIZE(L)
+        pMULTIPLY(L, numerator, dampingForce)
+        pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
+    }
     return dampingForce;
 }
 
@@ -82,7 +88,6 @@ void Euler(struct world * jello)
         jello->v[i][j][k].x += jello->dt * a[i][j][k].x;
         jello->v[i][j][k].y += jello->dt * a[i][j][k].y;
         jello->v[i][j][k].z += jello->dt * a[i][j][k].z;
-
       }
 }
 

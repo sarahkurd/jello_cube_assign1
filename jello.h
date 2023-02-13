@@ -10,6 +10,7 @@
 
 #include "openGL-headers.h"
 #include "pic.h"
+#include "performanceCounter/performanceCounter.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -22,6 +23,9 @@
 extern double Theta;
 extern double Phi;
 extern double R;
+
+// mouse drag external force
+extern double leftClickAndDragForce;
 
 // number of images saved to disk so far
 extern int sprite;
