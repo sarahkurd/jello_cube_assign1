@@ -56,10 +56,10 @@ double getSpringLength(SPRING s){
         length = 1.0 / 7.0;
         break;
     case SHEAR_FACE:
-        length = sqrt(2.0) / 7.0;
+        length = sqrt(2) / 7.0;
         break;
     case SHEAR_DIAGONAL:
-        length = sqrt(3.0) / 7.0;
+        length = sqrt(3) / 7.0;
         break;
     case BEND:
         length = 2.0 / 7.0;
@@ -87,14 +87,8 @@ void connectSprings(int i, int j, int k, int i_connect, int j_connect, int k_con
           || (k_connect>7) || (k_connect<0))) 
     {
         // These are the indices of the points in the jello.p[][][] list
-        struct point p1;
-        struct point p2;
-        p1.x = i;
-        p1.y = j;
-        p1.z = k;
-        p2.x = i_connect;
-        p2.y = j_connect;
-        p2.z = k_connect;
+        struct point p1 = {i, j, k};
+        struct point p2 = {i_connect, j_connect, k_connect};
 
         struct spring *springNew;
         springNew = (struct spring*) malloc(sizeof(struct spring));
@@ -130,17 +124,21 @@ void buildSpringNetwork() {
           connectSprings(i, j, k, i + 1, j, k, STRUCTURAL);
           connectSprings(i, j, k, i, j + 1, k, STRUCTURAL);
           connectSprings(i, j, k,  i, j, k + 1, STRUCTURAL);
+
           // SHEAR
-          connectSprings(i, j, k,  i + 1, j + 1, k, SHEAR_FACE);
-          connectSprings(i, j, k, i + 1, j, k + 1, SHEAR_FACE);
+          connectSprings(i, j, k, i + 1, j + 1, k, SHEAR_FACE);
+          connectSprings(i, j, k, i + 1, j - 1, k, SHEAR_FACE);
           connectSprings(i, j, k, i, j + 1, k + 1, SHEAR_FACE);
-          connectSprings(i, j, k, i - 1, j + 1, k, SHEAR_FACE);
-          connectSprings(i, j, k, i - 1, j, k + 1, SHEAR_FACE);
-          connectSprings(i, j, k, i, j - 1, k + 1, SHEAR_FACE);
-          connectSprings(i, j, k, i - 1, j + 1, k + 1, SHEAR_DIAGONAL);
-          connectSprings(i, j, k, i - 1, j - 1, k + 1, SHEAR_DIAGONAL);
+          connectSprings(i, j, k, i, j + 1, k - 1, SHEAR_FACE);
+          connectSprings(i, j, k, i + 1, j, k + 1, SHEAR_FACE);
+          connectSprings(i, j, k, i + 1, j, k - 1, SHEAR_FACE);
+
+          // SHEAR DIAGONAL
           connectSprings(i, j, k, i + 1, j + 1, k + 1, SHEAR_DIAGONAL);
           connectSprings(i, j, k, i + 1, j - 1, k + 1, SHEAR_DIAGONAL);
+          connectSprings(i, j, k, i + 1, j + 1, k - 1, SHEAR_DIAGONAL);
+          connectSprings(i, j, k, i + 1, j - 1, k - 1, SHEAR_DIAGONAL);
+
           // BEND
           connectSprings(i, j, k, i + 2, j, k, BEND);
           connectSprings(i, j, k, i, j + 2, k, BEND);
@@ -513,25 +511,27 @@ void calculateForcesOnParticles() {
     clearParticleForces();
     struct spring *currSpring = springs;
     struct spring *previous = currSpring;
+    struct point hooksForce = {0};
+    struct point dampingForce = {0};
+    struct point vectorBetweenPoints = {0};
     while (currSpring != NULL) {
-        struct point vectorBetweenPoints;
-        struct point hooksForce;
-        struct point dampingForce;
-
         // using my indices stored in the spring to index into the jello.p[][][] array
         struct point p1 = jello.p[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
         struct point v1 = jello.v[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z];
         if (currSpring->springType == COLLISION) {
-            struct point v2; // collision point has no velocity
-            v2.x = 0;
-            v2.y = 0;
-            v2.z = 0;
+            struct point v2 = {0}; // collision point has no velocity
             struct point p2 = currSpring->p2;
             vectorBetweenPoints.x = p2.x - p1.x;
             vectorBetweenPoints.y = p2.y - p1.y;
             vectorBetweenPoints.z = p2.z - p1.z;
             hooksForce = computeHooks(jello.kCollision, currSpring->restLength, vectorBetweenPoints);
             dampingForce = computeDamping(jello.dCollision, vectorBetweenPoints, v2, v1);
+            jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
+                    (-1.0 * hooksForce.x) + (-1.0 * dampingForce.x);
+            jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
+                    (-1.0 * hooksForce.y) + (-1.0 * dampingForce.y);
+            jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
+                    (-1.0 * hooksForce.z) + (-1.0 * dampingForce.z);
         } else {
             struct point p2 = jello.p[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
             struct point v2 = jello.v[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z];
@@ -547,13 +547,14 @@ void calculateForcesOnParticles() {
                     hooksForce.y + dampingForce.y;
             jello.particleForces[(int) currSpring->p2.x][(int) currSpring->p2.y][(int) currSpring->p2.z].z +=
                     hooksForce.z + dampingForce.z;
+
+            jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
+                    (-1.0 * hooksForce.x) + (-1.0 * dampingForce.x);
+            jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
+                    (-1.0 * hooksForce.y) + (-1.0 * dampingForce.y);
+            jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
+                    (-1.0 * hooksForce.z) + (-1.0 * dampingForce.z);
         }
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].x +=
-                (-1.0 * hooksForce.x) + (-1.0 * dampingForce.x);
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].y +=
-                (-1.0 * hooksForce.y) + (-1.0 * dampingForce.y);
-        jello.particleForces[(int) currSpring->p1.x][(int) currSpring->p1.y][(int) currSpring->p1.z].z +=
-                (-1.0 * hooksForce.z) + (-1.0 * dampingForce.z);
 
         // Unlink the collision node from the linked list.
         // We only want it in our list of springs once, at the time of collision.
@@ -759,15 +760,16 @@ void doIdle()
 
     if (pause == 0)
     {
-    // insert code which appropriately performs one step of the cube simulation:
-    for (i = 1; i <= jello.n; i++) {
-        checkCollision();
-        calculateForcesOnParticles();
-        if (jello.integrator[0]=='E') // Euler
-            Euler(&jello);
-        if (jello.integrator[0]=='R') // RK4
-            RK4(&jello);
-    }
+        // insert code which appropriately performs one step of the cube simulation:
+        for (i = 1; i <= jello.n; i++) {
+            checkCollision();
+            calculateForcesOnParticles();
+            if (jello.integrator[0]=='E') {// Euler
+                Euler(&jello);
+            } else if (jello.integrator[0]=='R') { // RK4
+                RK4(&jello);
+            }
+        }
     }
     glutPostRedisplay();
 }

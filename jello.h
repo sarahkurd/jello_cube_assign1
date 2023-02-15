@@ -66,7 +66,7 @@ struct world
 /**
  * Define the different types of springs so it is clear to understand as a reader.
  */
-typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, COLLISION } SPRING;
+typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, BEND_DOUBLE, COLLISION } SPRING;
 
 /**
  * A spring describes the characteristics of a spring in

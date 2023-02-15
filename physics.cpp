@@ -29,7 +29,7 @@ double mag(struct point vec) {
 }
 
 struct point computeHooks(double k, double restLength, struct point vectorBetweenPoints) {
-    struct point hooksForce;
+    struct point hooksForce = {0};
     struct point L = vectorBetweenPoints;
     double magnitude = mag(L);
     double displacement = magnitude - restLength;
@@ -44,8 +44,8 @@ struct point computeHooks(double k, double restLength, struct point vectorBetwee
 }
 
 struct point computeDamping(double k, struct point vectorBetweenPoints, struct point velocityPointA, struct point velocityPointB) {
-    struct point dampingForce;
-    struct point difference;
+    struct point dampingForce = {0};
+    struct point difference = {0};
     struct point L = vectorBetweenPoints;
     if (velocityPointA.x == 0.0 && velocityPointA.y == 0.0 && velocityPointA.z == 0.0 &&
             velocityPointB.x == 0.0 && velocityPointB.y == 0.0 && velocityPointB.z == 0.0) {
