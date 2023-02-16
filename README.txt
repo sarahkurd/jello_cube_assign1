@@ -14,6 +14,8 @@ Date: February 12, 2023
 - A collision detection system with a plane of the format ax + by + cz + d = 0
 
 # ------------- Extra Credit - Incline Plane Collision -------------- #
+
+1) -------
 I drew an inclined plane using the given a,b,c,d constants in the world files. To decide how to draw it,
 I solved for 4 points on the plane. I did this by setting x=2, y=2 and then solving for z, for example. Another point
 was found by setting x=2, y=-2 and again solving for z. This made sure the plane was drawing at reasonable points inside the bounding cube.
@@ -30,3 +32,11 @@ But, if the dot product was less than or equal to 0, then the cube point falls o
 away from the plane normal.
 
 Now that I know the cube collided with the incline plane, the next step was deciding what point on the plane to attach my collision spring to.
+I used a formula to find the closest point on a plane to a given point. I attached the cube's collision point to the closest
+point on the plane, created a spring, and added it to my list of springs. These incline plane collisions used the same
+hooks and damping forces as regular collision springs.
+
+2) --------
+I made some updates to the openGL code.
+I update the positions of the cameras to be further away from the cube.
+I added transparency so I can add the alpha values to the RGBA colors.

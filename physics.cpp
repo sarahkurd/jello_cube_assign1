@@ -13,7 +13,8 @@
    Returns result in array 'a'. */
 void computeAcceleration(struct world * jello, struct point a[8][8][8])
 {
-  for (int i=0; i<=7; i++) {
+    clearAcceleration(jello, a);
+    for (int i=0; i<=7; i++) {
       for (int j=0; j<=7; j++) {
           for (int k=0; k<=7; k++) {
               a[i][j][k].x = jello->particleForces[i][j][k].x / jello->mass;
@@ -21,52 +22,66 @@ void computeAcceleration(struct world * jello, struct point a[8][8][8])
               a[i][j][k].z = jello->particleForces[i][j][k].z / jello->mass;
           }
       }
-  }
+    }
+}
+
+void clearAcceleration(struct world * jello, struct point a[8][8][8]) {
+    for (int i=0; i<=7; i++) {
+        for (int j = 0; j <= 7; j++) {
+            for (int k = 0; k <= 7; k++) {
+                a[i][j][k].x = 0.0;
+                a[i][j][k].y = 0.0;
+                a[i][j][k].z = 0.0;
+            }
+        }
+    }
 }
 
 double mag(struct point vec) {
-    return sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
+    return sqrt((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z));
+}
+
+struct point normalize(struct point vec) {
+    double magnitude = mag(vec);
+    struct point normal = {vec.x/magnitude, vec.y/magnitude, vec.z/magnitude};
+    return normal;
+}
+
+struct point multiply(struct point vec, double scalar) {
+    struct point m = {vec.x * scalar, vec.y * scalar, vec.z * scalar};
+    return m;
+}
+
+struct point difference(struct point vec, struct point vec2) {
+    struct point d = {vec.x - vec2.x, vec.y - vec2.y, vec.z - vec2.z};
+    return d;
+}
+
+double dotProduct(struct point vector1, struct point vector2) {
+    return (vector1.x * vector2.x) + (vector1.y * vector2.y) + (vector1.z * vector2.z);
 }
 
 struct point computeHooks(double k, double restLength, struct point vectorBetweenPoints) {
-    struct point hooksForce = {0};
-    struct point L = vectorBetweenPoints;
-    double magnitude = mag(L);
+    struct point hooksForce = {0.0};
+    double magnitude = mag(vectorBetweenPoints);
     double displacement = magnitude - restLength;
-    if (abs(displacement) <= 0.0001) {
-        displacement = 0.0;
+    if (abs(displacement) <= 0.001) {
+        return hooksForce;
     }
-    double length; // used to normalize in pNormalize
-    pNORMALIZE(L)
-    pMULTIPLY(L, displacement, L)
-    pMULTIPLY(L, -1.0 * k, hooksForce)
+    struct point n = normalize(vectorBetweenPoints);
+    hooksForce = multiply(n, -k * displacement);
     return hooksForce;
 }
 
 struct point computeDamping(double k, struct point vectorBetweenPoints, struct point velocityPointA, struct point velocityPointB) {
     struct point dampingForce = {0};
-    struct point difference = {0};
-    struct point L = vectorBetweenPoints;
-    if (velocityPointA.x == 0.0 && velocityPointA.y == 0.0 && velocityPointA.z == 0.0 &&
-            velocityPointB.x == 0.0 && velocityPointB.y == 0.0 && velocityPointB.z == 0.0) {
-        dampingForce.x = 0.0;
-        dampingForce.y = 0.0;
-        dampingForce.z = 0.0;
-    } else {
-        double magnitude = mag(L);
-        pDIFFERENCE(velocityPointA, velocityPointB, difference)
-        double numerator = dotProduct(difference, L);
-        numerator = numerator / magnitude;
-        double length; // used to normalize in pNormalize
-        pNORMALIZE(L)
-        pMULTIPLY(L, numerator, dampingForce)
-        pMULTIPLY(dampingForce, -1.0 * k, dampingForce)
-    }
-    return dampingForce;
-}
-
-double dotProduct(struct point vector1, struct point vector2) {
-    return (vector1.x * vector2.x) + (vector1.y * vector2.y) + (vector1.z * vector2.z);
+    struct point diff = {0};
+    double magnitude = mag(vectorBetweenPoints);
+    diff = difference(velocityPointA, velocityPointB);
+    double d = dotProduct(diff, vectorBetweenPoints);
+    d = d / magnitude;
+    struct point n = normalize(vectorBetweenPoints);
+    return multiply(n, -1.5 * k * d);
 }
 
 /* performs one step of Euler Integration */
@@ -101,7 +116,6 @@ void RK4(struct world * jello)
         F4p[8][8][8], F4v[8][8][8];
 
   point a[8][8][8];
-
 
   struct world buffer;
 

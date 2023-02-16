@@ -66,7 +66,14 @@ struct world
 /**
  * Define the different types of springs so it is clear to understand as a reader.
  */
-typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, BEND_DOUBLE, COLLISION } SPRING;
+typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, COLLISION } SPRING;
+
+struct index
+{
+    int i;
+    int j;
+    int k;
+};
 
 /**
  * A spring describes the characteristics of a spring in
@@ -75,8 +82,9 @@ typedef enum { STRUCTURAL, SHEAR_FACE, SHEAR_DIAGONAL, BEND, BEND_DOUBLE, COLLIS
  */
 struct spring
 {
-  struct point p1; //indices
-  struct point p2; //indices
+  struct index p1; //indices
+  struct index p2; //indices
+  struct point collisionPoint;
   double restLength;
   SPRING springType;
   struct spring *next;
